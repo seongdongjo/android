@@ -110,6 +110,161 @@ class Kid(override val name: String, override var age: Int) : User(name,age) {
     }
 }
 =================================================
+//조건식
+package com.example.kotlin
+
+fun main() {
+    max(10,3)
+}
+
+fun max(a: Int, b: Int) {
+    if(a>b) {
+        println(a)
+    } else {
+        println(b)
+    }
+}
+
+//자바와 다르게 변수로 받을 수 있다.
+fun max1(a: Int, b: Int) {
+    val result = if(a>b) {
+        println(a)
+    } else {
+        println(b)
+    }
+    println(result) //출력: kotlin.Unit -> void이기 때문에 print는
+}
+
+fun max2(a: Int, b: Int) {
+    val result = if(a>b) {
+        a
+    } else {
+        b
+    }
+    println(result) //출력: 10
+}
+
+=================================================
+package com.example.kotlin
+
+fun main() {
+    max(10,3)
+    isHoliday2("금")
+}
+
+//코틀린은 삼항연산자가 없다.
+//코틀린은 조건문이 아니라 조건식이라서 변수로 받을 수 있다.
+fun max(a: Int, b: Int) {
+    val result = if(a>b) a else b //중괄호 생략가능
+    println(result)
+}
+
+//월 화 수 목 금 토 일
+fun isHoliday(dayOfWeek: String) {
+    when(dayOfWeek) {
+        "월" -> false
+        "화" -> false
+        "수" -> false
+        "목" -> true
+        "금" -> true
+        "토" -> true
+        "일" -> true
+    }
+}
+
+//월 화 수 목 금 토 일
+fun isHoliday1(dayOfWeek: String) {
+    when(dayOfWeek) {
+        //같은 값은 콤마로 생략가능
+        "월",
+        "화",
+        "수" -> false
+        "목",
+        "금",
+        "토",
+        "일" -> true
+    }
+}
+
+//월 화 수 목 금 토 일
+fun isHoliday2(dayOfWeek: String) {
+    val result = when(dayOfWeek) {
+        //case에서 default를 썻다면 여기는 else가 default다
+        "월",
+        "화",
+        "수" -> true
+        else -> false
+    }
+    println(result) //출력: false
+}
+
+fun isHoliday3(dayOfWeek: String) {
+    when(val day = dayOfWeek) { //이렇게 받아서 쓸 수도 있다.
+        "토",
+        "일" -> if(day == "토") "좋아" else "너무좋아"
+        else -> "안좋아"
+    }
+}
+
+fun isHoliday(dayOfWeek: Any) { //어떤걸 받든 상관없다 -> Any
+    when(dayOfWeek) {
+        "토",
+        "일" -> if(dayOfWeek == "토") "좋아" else "너무좋아"
+        in 2..4 -> {}  //파라미터가 정수이면 이걸쓰면된다.
+        in listOf("월", "화") -> {}  //파라미터가 "월", "화" 이면
+        else -> "안좋아"
+    }
+}
+
+=====================================================
+//반복문
+package com.example.kotlin
+
+fun main() {
+    // for(int i = 1; i<11; i++) {
+    //
+    //}
+    for(i in 1..10) {  //이거와 같은게 IntRange(1,10)
+        print(i)
+        print(".")
+    }
+    
+    //위와 같은 의미이다.
+    for(i in IntRange(1,10)) {
+        print(i)
+        print(".")
+    }
+}
+====================================================
+package com.example.kotlin
+
+fun main() {
+    for(i in 1 until 10) { //until은 끝에 숫자를 포함하지 않는다.
+        print(i)
+        print(".")
+    }
+
+    for(i in 1..10 step(2)) {//2씩 증가
+        print(i)
+        print(".")
+    }
+
+    for(i in 10 downTo 1) { //10부터 작아지게 만들겠다.
+        print(i)
+        print(".")
+    } // 10.9.8.7....
+
+    for(i in 10 downTo 1 step(2)) {
+        //출력: 10.8.6.4....
+    }
+
+    var c = 1
+    while(c<11)  {
+        print(c)
+        c++
+    }
+}
+==================================================
 
 
 
