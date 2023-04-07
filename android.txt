@@ -73,6 +73,44 @@ fun main() {
     
 }
 =================================================
+package com.example.kotlin
+
+fun main() {
+    val user = User("채상아", 10)
+    //user.name 접근불가능 private이라서
+    println(user.age)
+}
+
+class User(private val name: String, var age: Int = 100) {
+
+}
+
+=================================================
+package com.example.kotlin
+
+fun main() {
+    Kid("아이", 3, "male")
+}
+
+//open을 이용해서 상속을 허용해야한다.
+open class User(open val name: String, open var age: Int = 100)
+
+//기본생성자는 생략
+class Kid(override val name: String, override var age: Int) : User(name,age) {
+    var gender: String =  "female"
+
+    //가장먼저 호출
+    init {
+        println("초기화 중입니다.")
+    }
+
+    constructor(name: String, age: Int, gender: String) : this(name,age) {
+        this.gender = gender
+        println("부 생성자 호출")
+    }
+}
+=================================================
+
 
 
 
