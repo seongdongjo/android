@@ -294,7 +294,105 @@ fun main() {
 
 }
 ====================================================
+package com.example.kotlin
 
+fun main() {
+    var name: String = "상아"
+    //name = null 에러가난다 String에는 이미 null이 들어갈수없다는 의미가 내포되있기 때문이다.
+
+    var number: Int = 10
+    //number = null
+
+    //이렇게 컴파일단계에서 null여부를 구분지을수있기때문에 좋다.
+    //해당타입이 null이 들어갈수있다는 의미다.
+    var nickName: String? = null
+    var secondNumber: Int? = null
+
+    //일반적인 예시
+    var result = if(nickName == null) {
+        "값이없음"
+    } else {
+        nickName
+    }
+    
+    //코틀린에서 쓰는 예
+    val result = nickName?: "값이 없음" //값이 null이면 "값이 없음"을 반환해라 의미이다
+    println(result)
+
+    //또 다른 예시
+    //동작하다가 변수에 null이 들어갈수있으니까 이렇게 안전하게 해줘야한다.
+    val size = nickName?.length;  //nickName이 null이면 null로 반환해준다. 에러없이
+    val size1 = nickName!!.length // null이 동작중에 안들어갈거라는 확신이 있을 때
+}
+
+======================================================
+VTS 제안서 작업
+선원센터 푸시알림 심사 및 카드등록
+선원센터 푸시알림 APNs, FCM key,id 생성
+선원센터 푸시알림 서버단 전송 구현
+
+package com.example.kotlin
+
+fun main() {
+    check("안녕") //출력: 문자열
+}
+
+fun check(a: Any) : String {
+    return if(a is String) { //타입체킹
+        "문자열"
+    }else if(a is Int) {
+        "숫자"
+    } else {
+        "모름"
+    }
+}
+
+fun check(a:Any) : String {
+    return when (a) {
+        is String -> {
+            "문자열"
+        }
+        is Int -> {
+            "숫자"
+        }else -> {
+            "몰라요"
+        }
+    }
+}
+
+=====================================================
+package com.example.kotlin
+
+fun main() {
+   cast("안녕") //안녕
+   cast(10)    //Exception에러가난다. -> String으로 변환이 안되기때문에
+   println(smartcast("안녕")) // 2
+   println(smartcast(10)) // 9
+   println(smartcast(true)) // -1
+}
+
+fun cast(a : Any) {
+   val result = a as String
+   println(result)
+}
+
+//Exception 에러가 안나게 하기 위해서 아래와 같이 작성해야함
+fun cast(a: Any) {
+   val result = a as? String  // 물음표를 붙임으로써 캐스팅이 안되도 에러 발생안하고 null를 반환한다.
+   val result = (a as? String) ?: "실패"  //null이 나오면 실패
+   println(result)
+}
+
+fun smartcast(a: Any) {
+   return if(a is String) { //String 인걸체킹 했기때문에 a.length 가능
+      a.length
+   } else if(a is Int) {
+      a.dec()  //숫자-1
+   } else {
+      -1
+   }
+}
+=====================================================
 
 
 
