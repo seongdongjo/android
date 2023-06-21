@@ -393,11 +393,998 @@ fun smartcast(a: Any) {
    }
 }
 =====================================================
+fun main() {
+    //변수
+    val box1 = "test box1";
+    println(box1) //출력
+
+    box1 = "new box1" //에러가 난다.(val로 선언했기떄문에) -> var써야한다.
+    println(box1) 
+    
+    
+    println("123" + 4) //1234 -> 텍스트로 취급해서 4도 텍스트로 취급된다.
+    println(123+4) //127
+}
+======================================================
+fun main() {
+    val test1 = "1234"
+    val test2 = 1234
+    
+    //타입출력
+    println(test1::class.java.simpleName)  //String
+    println(test2::class.java.simpleName)  //int
+    
+    val test3 = 1234.1234
+    println(test3::class.java.simpleName) //double
+    
+    //이렇게도 가능하다.
+    val test4 : Int = 1234 
+
+    //타입을 잘못넣었을때 에러가난다.
+    val test5 : Int =  "1234"
+    
+    val test7 : Long = 1234123412341234
+    
+    val test8 : Float = 1234.1234f
+    
+    //데이터 타입 변경하고 싶을 때
+    val test9 : Int = 1234
+    val test10 : test9.toString()
+    println(test10::class.java.simpleName) //String
+    
+    
+    //또 다른 데이터타입 변경방법
+    val test11 : String = "1234"
+    val test12 = Integer.parseInt(test11)  //Integer로 변경
+
+    
+    //null
+    val test13 = ""  //빈문자열
+    val test14 = null //아예 없다.
+    
+    val test15 : String = null //에러가난다.
+    val test16 : String? = null //에러가안난다
+    val test16 : String? = "abc"
+}
+
+=================================================================
+val score = 100
+when(score) {
+    100->{
+        println("100")
+    }
+    90-> {
+        println("90")
+    }
+    80-> {
+        println("80")
+    }
+    else -> {
+        print("no")
+    }
+}
+===================================================================
+fun main() {
+    //리스트 만드는법
+    val testList1 = ArrayList<String>()
+    testList1.add("a")
+    testList1.add("b")
+    testList1.add("c")
+    println(testList1) //[a,b,c]
+    println(testList1[0]) //a
+    
+    //또 다른 리스트만드는법
+    val testList2 = listOf("a","b","c")
+    println(testList2) //[a,b,c]
+    
+    //또 다른 방법
+    val testList3 = mutableListOf<String>("a","b","c")
+    val testList3 = mutableListOf("a","b","c")   //<String> 생략가능
+    println(testList3)
+}
+
+
+===========================================================
+//필터링
+fun main() {
+    val testList4=listOf("student1","student2","student3","student4","teacher1","student5")
+    testList4.filter{it.startsWith("s")} //{student1, student2, student3, student4, studnet5}
+    
+    val testList5=listOf("student1","student2","student3","student4","teacher1","student5", null)
+    testList5.filter{it.startsWith("s")} //null이 있을 때는 필터링을 할 수가 없다.
+    testList5.filterNotNull().filter {it.startsWith("s")}
+    
+    
+    var test1 : String = "a"
+    var test2 : String = "b"
+    test1 = test2 //b
+    
+    var test3 : String = "c"
+    var test4 : String? = "d"
+    test3 = test4  //null이 아닌 값을 null일수도 있는 값을 넣을수가없다.
+    test3 = test4!!  //null이 아니다 라고 표시하면 됨
+}
+
+=============================================================
+//반복문
+val testList6 = listOf("a","b","c","d","e","f")
+for(i in testList6) {
+    println(i)
+}
+
+for(i in 1..3) {
+    println("i의 값은: $i") //두 개 같은 의미이다.
+    println("i의 값은:" +i )
+}
+
+
+for(i in 1..3) {
+    for(j in 1..3) {
+        println("i is $i j is $j")  // i is 1 j is 1 , 1 2, 1 3, ...
+    }
+}
+
+
+=================================================================
+//List
+
+fun main() {
+    val testList1 = listOf("a","b","c") //근데 이방식은 값이 추가가 안된다.
+    println(testList1)
+    
+    //값 추가가능
+    val testList2 = mutableListOf("a","b","c")
+    testList2.add("d")
+    testList2.remove("a") //[b,c,d]
+    
+}
+
+//Map
+
+fun main() {
+    //Map을 안쓰면 List에서 일일이 인덱스를 받고 그 인덱스로 검색을해서 value로 가져와야한다.
+    val testMap1 = mutableMapOf<Int,String>()
+    testMap1.put(2,"유리")
+    testMap1.put(10,"철수")
+    testMap1.put(15,"짱구")
+    testMap1.put(22,"훈이")
+
+    testMap1[10] //철수 
+}
+
+//Set(중복허용x)
+
+fun main() {
+    val testSet1 = mutableSetOf("a","b","c")
+    testSet1.add("d"); // [a,b,c,d]
+    testSet1.remove("d")
+}
+
+=============================================================
+//While
+
+fun main() {
+    var count = 0
+    
+    while(count < 100) {
+        count++ //99까지만
+    }
+    
+    val testMap2 = mutableMapOf<Int, String>()
+    testMap2[5] = "유리1"
+    testMap2[15] = "유리2" //이렇게 key, value를 넣어도된다.(put안쓰고)
+    //{5=유리1, 15=유리2}
+}
+
+
+// Iterator
+fun main() {
+    val testList2 = mutableListOf("a","b","c")   
+    val testIterator = testList2.listIterator()    //  |a|b|c|
+    println(testIterator.next()) //a
+    println(testIterator.next()) //b
+    println(testIterator.hasNext()) //true(다음에 값이 있다)
+    println(testIterator.next()) //c
+    println(testIterator.hasNext()) //false
+    println(testIterator.previous()) //c (이전값으로)
+    
+    while(testIterator.hasNext()) {
+        println(testIterator.next())
+    }
+}
+
+==========================================================
+//50점 이상 출력
+fun main() {
+    val student = mutableMapOf<Int, String>()
+    student[99] = "민지" //key는 점수
+    student[20] = "철수"
+    student[35] = "민수"
+    student[48] = "가영"
+    student[100] = "하영"
+    
+    val testList=ArrayList<String>()
+    
+    for(i in student) {
+        print(i.key) //99, 20, ..
+        if(i.key >= 50) {
+            println(i) //99=민지, 100=하영, ..
+            println(i.value)
+            testList.add(i.value) //리스트에 담아서
+        }
+    }
+}
+=========================================================
+//함수
+
+fun main() {
+    abc() //30
+    sum(10,20) //30
+    println(sum2(10,20)) //30 
+    bobMaking(5)
+}
+
+fun sum(a: Int, b: Int) {
+    println(a+b)
+}
+
+fun sum2(a: Int, b: Int) : Int {
+    val result = a+b
+    return result
+}
+
+fun bobMaking(time: Int) {
+    println("$time 시간 후에 밥이 완료됩니다")
+}
+
+fun abc() {
+    val a = 10
+    val b = 20
+    val c = a+b
+    println(c)
+}
+
+========================================================
+//논리연산
+fun main() {
+    val a = "남자"
+    val b = 20
+    
+    //And
+    if(a=="남자" && b>=20) {
+        
+    } else {
+    
+    }
+    
+    //OR
+    val c = "남자"
+    val d = 30
+    if(c=="남자" || d >= 30) {
+        
+    }
+}
+
+============================================================
+fun main() {
+    val student = mutableMapOf<Int, String>()
+    student[99] = "민지" //key는 점수
+    student[20] = "철수"
+    student[35] = "민수"
+    student[48] = "가영"
+    student[100] = "하영"
+    
+    for(i in student) {
+        if(i.key >= 50 && i.value.length > 2) {
+        
+        }
+    }
+}
+==============================================================
+//문자열 가공
+fun main() {
+    val testString = "동해물과 백두산이 마르고 닳도록"
+    val newTestString = testString.split(" ")
+    val replaceValue = testString.replace("백두산", "한라산") //백두산을 한라산으로
+    println(newTestString) // [동해물과, 백두산이, 마르고, 닳도록]
+    println(newTestString[0]) //동해물과
+    
+    println(testString[0]) //동 -> 이렇게 하나씩 가져오면 번거롭다
+    
+    println(testString.substring(0,2)) //동해
+    println(0,testString.length-1)  //~~닳도
+    
+}
+===============================================================
+seongdong@naver.com -> split("@")[1]  -> naver.com -> split("@")[1].split(".") -> [naver, com]
+-> split("@")[1].split(".")[0]  -> naver
+===============================================================
+//엘비스 연산자
+fun main() {
+    var testStr1 : String = ""
+    println(testStr1) //공백출력
+    
+    var testStr2 = null
+    println(testStr2) //null
+    
+    var testStr3 : String = "abcd"
+    var testStr4 : String  = null(에러가난다 String에는 null안된다) "null"은 들어간다(문자열자체라서)
+    var testStr4 : String? = null
+}
+
+//예시
+fun main() {
+    println(findStringLength1("asdf")) //null을 넣으면 에러가난다.
+}
+
+fun findStringLength1(str:String) : Int {
+    return str.length
+}
+
+fun findStringLength2(str:String?) : Int? {  //null일수도있으니
+    return str?.length //null 일수도 있으니
+
+
+//이렇게 하는게 편하지
+fun findStringLength3(str: String?) : Int {
+    var resultCount = 0
+    if(str != null) {
+        resultCount = str.length
+    }
+    return resultCount
+}
+
+//이것도 귀찮으니 엘비스 연산자를 쓰자
+fun findStringLength4(str : String?) : Int {
+    return str?.lentgh ? : 0  //null이면 0을 리턴 아니면 문자열길이를 리턴
+}
+ 
+}
+
+==============================================================
+//Any
+fun main() {
+    var str1 : String = "abc"
+    str1 = 123 //에러난다
+    
+    var str2 : Any = "abc"
+    str2 = 123 //int타입이여도 잘된다.
+    
+    //타입확인
+    // is는 맞나 확인하는 용도
+    // as는 type casting이다.
+    
+    var str3 : Any = "abc"
+    if(str3 is String) {
+        println("this is string")
+    }
+}
+==============================================
+fun main() {
+    var str4 : Any = "abc"
+    when(str4) {
+        is Int -> {println("this is int")}
+        is String ->  {println("this is string")}
+        else -> {
+            println("this is else")
+        }
+    }
+}
+=================================================
+fun main() {
+    var str5 : String = "abc"
+    var str6 : String = str5 as String  //문자열로 집어넣어라
+    
+    var str7 : Int = 1
+    var str8 : String = str7 as String //에러가난다.타입문제
+    
+    //그래서
+    var str9 : String? = 1 as? String  //타입변경이 안되면 null, ?가 없으면 에러가 난다.
+    println(str9) //null
+}
+
+================================================
+// List 가공하기
+fun main() {
+    val testList1 = mutableListOf<Int>()
+    testList1.add(1)
+    testList1.add(2)
+    testList1.add(3)
+    testList1.add(4)
+    testList1.add(10)
+    testList1.add(10)
+    testList1.add(11)
+    testList1.add(11)
+    
+    println(testList1.distinct()) // 중복제거 [1,2,3,4,10,11]
+    println(testList1.maxOrNull()) //큰값 11
+    println(testList1.minOrNull()) // 1
+    println(testList1.average()) // 6.5
+}
+
+=====================================================
+fun main() {
+    val testList2 = listOf("john", "jay", "minsu", "minji", "bokchi")
+    
+    val result1 = testList2.filter {
+        it.startsWith("j")
+    }
+    println(result1)  // [john, jay]
+    
+    
+    //짝수만
+    val testList3 = listOf(1,2,3,4,5)
+    val result2 = testList3.filter {
+        it % 2 == 0
+    }
+    println(result2) // [2,4]
+    
+    
+    //해당되는 애들을 그룹으로 묶고싶다
+    val testList4 = listOf("a", "aa", "aaa", "aaaa")
+    val result3 = testList4.groupBy {
+        it.length > 2
+    }
+    println(result3) // {false=[a,aa], true=[aaa,aaaa]}
+    println(result3[true]) //true값만  ->  [aaa,aaaa]
+}
+
+======================================================
+//function -> 기능
+//class -> 설계 + 기능
+
+fun main() {
+    println(Test().a) //abc
+    println(Test2("abcd").b) //abcd
+    println(Test3().test3Fun())
+    
+    val myinfo = Myinfo()
+    println(myinfo.getMyage()) //20 
+    
+    val dog = Dog("파트라슈",20)
+    dog.getMyDogInfo()  //파트라슈 : 20
+}
+
+class MyInfo() {
+    fun getMyage() : Int {
+        return 20
+    }
+    fun getMyName() : String {
+        return "MyName is"
+    }
+    fun getMyLocation() : String {
+        return "Sodeul"
+    }
+}
+
+class Test3() {
+    fun test3Fun() {
+        println("test3Fun 출력")
+    }
+}
+
+class Test2(str : String) {
+    val b = str
+}
+
+class Test {
+    val a = "abc"
+}
+
+class Dog(name: String, age: Int) {
+    val dogName = name
+    val dogAge = age
+    fun getMyDogInfo() : String {
+        return "$dogName:$dogAge"
+    }
+}
+
+
+========================================================
+fun main() {
+    initTest()  //시작
+    initTest().testInitFun() //시작
+                             //testInitFun
+
+    InitialValue("박보검",20)  
+    InitialValue("박보검") //만약에 "박보검" 만 인자로 줘도 에러가 안나게끔할려면 함수에서 디폴트 값을 주면된다.  
+}
+
+class InitialValue(name:String, age:Int=20) {
+    init {
+        println(name)
+        println(age)
+    }
+}
+
+class initTest() {
+    
+    init {
+        println("시작")
+    }
+    
+    fun testInitFun() {
+        println("testInitFun")
+    }
+}
+
+==========================================================
+//오버로딩
+//같은 이름의 메서드를 여러개 가지면서, 매개변수의 유형과 개수가 다르도록
+
+fun main() {
+    val c = Calculator()
+    c.sumNumber(1,2)
+    c.sumNumber(1,2,3)
+    c.sumNumber("나는","콜백")
+}
+
+class Calculator() {
+    fun sumNumber(a:Int,b:Int) {
+        println(a+b)   
+    }
+    fun sumNumber(a:Int,b:Int,c:Int) {
+        println(a+b+c)
+    }
+    fun sumNumber(a:String,b:String) {
+        println(a+b)
+    }
+}
+============================================================
+//상속을 사용하지 않을 때
+fun main() {
+    Job1()
+    Job2()
+}
+
+class Job1() {
+    init {
+        println("일을 합니다")
+        println("코딩을 합니다")
+    }
+}
+class Job2() {
+    init {
+        println("일을 합니다")
+        println("디자인을 합니다")
+    }
+}
+
+
+==========================================================
+//상속을 사용할 때
+fun main() {
+    Job3()  //일을합니다
+            //마케팅을 합니다
+}
+
+open class AllJobs() {
+    init {
+        println("일을 합니다.")
+    }
+}
+
+class Job3() : AllJobs() {
+    init {
+        println("마케팅을 합니다.")
+    }
+}
+
+=============================================================
+//상속과 오버라이딩
+fun main() {
+    Child()    //이것은 부모입니다.
+               //이것은 자식입니다.
+}
+
+open class Parents() {
+    init {
+        println("이 것은 부모입니다.")
+    }
+}
+
+class Child() : Parents() {
+    init {
+        println("이 것은 자식입니다")
+    }
+}
+==============================================================
+//상속과 오버라이딩
+fun main() {
+    Parents().doing() //자식을 돌봅니다.
+    
+    Child().disease() //부모꺼를 사용가능하다.
+    Child().doing() //겁이 많습니다.
+}
+
+open class Parents() {
+    open fun doing() {
+        println("자식을 돌봅니다")
+    }
+    fun disease() {
+        println("비염이 있습니다.")
+    }
+}
+
+class Child() : Parents() {
+    override fun doing() {
+        println("겁이 많습니다")
+    }
+}
+===============================================================
+//추상클래스 
+// class -> 붕어빵 틀
+// abstract class ->  기존에는 비어있고 꽉 채워서 붕어빵을 만들어야하는 틀
+
+//기존 방식
+fun main() {
+    Bike().wheel()
+    Bike().engine() //부모꺼 사용
+}
+
+open class Car {
+    open fun wheel() {
+        println("굴러갑니다")
+    }
+    open fun engine() {
+        println("시동이 켜졌습니다.")
+    }
+}
+
+class Bike() : Car() {
+    override fun wheel() {
+        println("자전거가 굴러갑니다")
+    }
+}
+
+========================================================
+//추상클래스 -> 공통적인 기능을 사용할 때
+fun main() {
+    BMW().wheel()
+    BMW().engine()
+}
+
+
+//빈 붕어빵 틀
+abstract class Car {
+    abstract fun wheel()
+    abstract fun wheel()
+}
+
+//위의 빈 붕어빵 틀을 꽉채워서 사용
+class BMW() : Car() {
+    override fun wheel() {
+        println("비엠따블류")
+    }
+    override fun engine() {
+        println("BMW 시동 걸립니다")
+    }
+}
+======================================================
+//인터페이스 -> 추상 클래스 처럼 꼭 채워넣어야하는 붕어빵 틀인데 작은 틀이라서 다른틀에 여러개 넣을 수 있다.
+
+fun main() {
+    BMW().wheel()
+    BMW().engine()
+}
+
+interface Car {
+    fun wheel()
+    fun engine()
+}
+
+class BWM() : Car {
+    override fun wheel() {
+        println("wheel 돌어감")
+    }
+    override fun engine() {
+        println("BMW 엔진 돌아감")
+    }
+}
+
+=============================================================
+//그럼 어떨 때 쓸까
+fun main() {
+    
+}
+
+abstract class Car {  //큰틀개념 찍어내는
+    abstract fun wheel()
+    abstract fun engine()
+}
+
+interface CarAutoDriving {
+    fun autoDriving()
+}
+
+interface CarAutoParking {
+    fun autoParking()
+}
+
+class BMW() : Car(), CarAutoDriving, CarAutoParking {
+    override fun wheel() {
+        println("BMW 굴러감")
+    }
+    override fun engine() {
+        println("BMW 엔진시동")
+    }
+    override fun autoDriving() {
+        println("자율주행")
+    }
+    override fun autoParking() {
+        println("자율주차")
+    }
+}
+
+class Benz() : Car() {
+    override fun wheel() {
+        println("Benz 굴러감")
+    }
+    override fun engine() {
+        println("Benz 엔진시동")
+    }
+    fun autoParking() {
+        println("자율주차")
+    }
+}
+
+=========================================================
+//Data Class
+//데이터를 넣어놓는 클래스
+fun main() {
+    val justDog = JustDog("파트라슈",21)
+    println(justDog.name) //잘나온다 -> 그럼, 그냥 클래스에 데이터 넣으면 안됨??
+    println(justDog.toString()) //객체주소가 나온다.(이게 데이터 클래스랑 차이다)
+    
+    val dataDog = DataDog("파트라슈 친구",15)
+    println(dataDog.toString()) //DataDog(name=파트라슈 친구, age=15) //데이터 클래스는 이렇게나온다
+
+    val dataDog2 = dataDog.copy(name="파트라슈 여자친구")
+    println(dataDog2.toString())  //DataDog(name=파트라슈 여자친구, age=15)
+}
+
+//그냥 클래스로 데이터 넣을때 예시
+class JustDog(var name : String, var age: Int)
+
+//데이터 클래스에 넣을 때 예시
+data class DataDog(var name: String, var age: Int)
+
+//똑같은데 언제 쓰임? -> 서버에서 데이터를 받아온것을 넣을때
+
+==========================================================
+//중첩클래스
+
+fun main() {
+    val test1 = Test1().TestNestedClass()
+    test1.testFun1()
+    
+    val test2 = Test2().Test2InnerClass()
+    test2.testFun2()
+}
+
+class Test1 {
+    val tempText1="tempText1"
+
+    class TestNestedClass {
+        fun testFun1() {
+            println("TestFun1")
+            println(tempText1)  //에러가 난다.(중첩클래스에서는 외부로 접근 못한다.)
+        }
+    }
+}
+
+
+//내부 클래스
+class Test2 {
+    val tempText2 = "tempText2"
+
+    inner class Test2InnerClass {
+        fun testFun2() {
+            println("TestFun2")
+            println(tempText2)  //출력이 된다.
+        }
+    }
+}
+==========================================================
+//람다
+fun main() {
+    println(a())
+    println(sumNumber(1,2))
+}
+
+fun sum(a:Int,b:Int) : Int {
+    return a+b
+}
+
+val sumNumber = {a:Int, b:Int -> a+b}
+val sumTypeNumber : (Int,Int) -> Int = {a,b -> a+b}
+val sumTypeNumberNull : (Int, Int) -> Int? = {a,b->null}
+
+fun a() : String{
+    return "text"
+}
+
+fun b() = "text"
+
+============================================================
+fun main() {
+    println(sumString("1","2"))
+}
+
+fun sumString(a:String, b:String) : String {
+    return "string1 : $a string2 : $b;
+}
+
+val sumStringTwo = {a: String, b: String -> "string1 : $a string2: $b"}
+val sumStringTypeTwo : (String, String) -> String = {a,b -> "string1:$a string2 : $b"}
+
+=============================================================
+//고차함수  f(f(x))
+fun main() {
+    sum(1,2, {a:Int, b:Int -> a+b})
+    sum(1,2) {a:Int,b:Int->a+b}
+    sum(1,2, ::testSum)  //함수를 넣는다라고 생각
+}
+
+fun sum(a : Int, b:Int, operation : (Int, Int) -> Int) {
+    println("$a $b")  // 1 2
+    println(operation(a,b)) // 3
+}
+
+//또 다른 방법
+fun testSum(a:Int, b:Int) : Int {
+    return a+b
+}
+=========================================================
+fun main() {
+    printTest("abc")
+    highPrintTest(::printTest) //bbb
+}
+fun printTest(str:String) {
+    println(str)
+}
+fun highPrintTest(operation : (String) -> Unit) { //Unit이 아무것도 리턴하지 않는다는의미다.
+    operation("bbb")
+}
+
+fun test1() : Unit {
+    println("abc")
+}
+
+fun test2() : Unit {
+    println("abc2")
+    return
+}
+
+fun test3() : Unit {
+    println("abc3")
+    return Unit
+}
+
+==========================================================
+//제네릭
+//컴파일시에 타입 체크를 할 수 있다.
+//타입 캐스팅이 필요없다
+fun main() {
+    val box1 = Box1(10)
+    println(box1.value) //10
+    
+    val box3 = Box3(10)
+    val box4 = Box3("10")
+
+    testFun1("abc")
+    testFun2("a")
+    testFun2(123)
+}
+
+fun testFun1(a:String) {
+    println(a)
+}
+
+fun <T> testFun2(a:T) {
+    println(a)
+}
+
+class Box1(test:Int) {
+    var value = test
+}
+
+class Box3<T>(test:T) {
+    var value = test
+}
+=============================================================
+//
 
 
 
 
 
+==============================================================
+#)푸시알림
+앱 푸쉬서비스는 인터넷 연결도 필요하기 때문에 인터넷 퍼미션도 추가해 준다.
+<uses-permission android:name="andriod.permission.INTERNET"/>
+
+onMessageReceived() 메서드는 클라우드 서버에서 메시지를 전송하면 자동으로 호출되고
+해당메서드 안에서 메시지를 처리한다.
+
+#) Head Up Notification
+Android O (API26)부터는 Notification을 하려면 Channel을 먼저 생성해주어야한다
+
+//channel Id : 고유한 ID여야 하고 길면 잘릴 수 있다.
+//Importance : 헤드업 알림이 되어야 한다면 IMPORTANCE_HIGH로 설정하고, 아니면 IMPOTANCE_DEFAULT로 설정한다.
+
+//채널 생성함수
+void createNotificationChannel(String channelId, String channelName, int importance) {
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.0) {
+        Notification notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.createNotificationChannel(new NotificationChannel(channelId, channelName, importance))
+    }
+}
+
+//채널 생성
+createNotificationChannel(DEFAULT, "default channel", NotificationManager.IMPORTANCE_HIGH)
+
+
+//Notification생성함수
+void createNotification(String channelId, int id, String title, String text) {
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(this,channelId)
+        .setpriority(NotificationCompat.PRIORITY_HIGH) //헤드업 알림을 위해서는 HIGH로 설정
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // 알림시 보여지는 아이콘
+        .setContentTitle(title)
+        .setContentText(text)
+        .setTimeoutAfter(1000) // 지정한 시간 이후 알림이 사라진다.
+        .setStyle(new NotificationCompat.BigTextStyle().bigText(text)) //text는 한줄이 넘어가면 짤린다. 모든 텍스트를 보여주기위해서는 BigText로
+        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE); //알림시 효과음, 진동여부
+        
+    NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE)
+    notificationManager.notify(id,builder.build())  //notify() : 생성한 notification을 등록한다. id가 같으면 1개의 notification만 보여짐
+        
+}
+
+//해당 채널로 Notification 생성
+createNotification(DEFAULT, 1, "제목", "본문")
+=====================================================================================
+public class MainActivity extends AppCompatActivity {
+    private final String DEFAULT = "DEFAULT";
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        //Head Up Display를 위해 HIGH로 설정
+        createNotificationChannel(DEFAULT, "default channel", NotificationManager.IMPORTANCE_HIGH);
+        createNotification(DEFAULT,1,"title","text")
+    }
+    
+    void createNotificationChannel(String channelId, String channelName, int importance) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(new NotificationChannel(channelId, channelName, importance));
+        }
+    }
+    
+    void createNotification(String channelId, int id, String title, String text) {
+         NotificationCompat.Builder builder = new NotificationCompat.Builder(this,channelId)
+        .setpriority(NotificationCompat.PRIORITY_HIGH) //헤드업 알림을 위해서는 HIGH로 설정
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // 알림시 보여지는 아이콘
+        .setContentTitle(title)
+        .setContentText(text)
+        .setTimeoutAfter(1000) // 지정한 시간 이후 알림이 사라진다.
+        .setStyle(new NotificationCompat.BigTextStyle().bigText(text)) //text는 한줄이 넘어가면 짤린다. 모든 텍스트를 보여주기위해서는 BigText로
+        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE); //알림시 효과음, 진동여부
+        
+    NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE)
+    notificationManager.notify(id,builder.build())
+    }
+    
+    void destroyNotification(int id) {
+        NotificationManager notificationManager = (Notification)getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.cancel(id)
+    }
+}
+
+==========================================================================
 
 
 
