@@ -1293,16 +1293,430 @@ class Box3<T>(test:T) {
     var value = test
 }
 =============================================================
-//
+// object -> 싱글톤 패턴 (디자인패턴)
+// 디자인패턴 -> 코드를 어떻게 짜는게 더 좋고, 어떤 방식으로 구성해야 유지보수가 쉬운가
+//객체를 한개만 생성하도록 한다
+
+fun main() {
+    val test1 = TestClass()
+    val test2 = TestClass()
+    
+    test1.count = 10
+    println(test1.count) //10
+    println(test2.count) //0
+    
+    test3.count = 10
+    val test3 = testObject  
+    val test4 = testObject
+    println(test3.count) //10
+    println(test4.count) //10
+}
+
+object testObject{
+    init {
+        println("testObject") //두번호출된다.
+    }
+    var count = 0
+}
+
+class TestClass {
+    init{
+        println("testClass")  //한번만 호출된다
+    }
+    var count = 0
+}
+=============================================================
+//전역으로 사용이 가능하다.
+fun main() {
+    val test5 = TestObjectClass()
+    val test6 = TestObjectClass()
+    test5.plusBtn()
+    println(TestObjectClass.number) //1
+    
+    test6.minusBtn()  //똑같은객체
+    println(TestObjectClass.number) //0
+}
+class TestObjectClass {
+    companion object {
+        var number = 0
+    }
+    fun plusBtn() {
+        number++
+    }
+    fun minusBtn() {
+        number--
+    }
+}
+===============================================================
+//지연초기화
+// lateinit / lazy
+
+fun main() {
+    var justString : String = "아무거나 스트링"
+    
+    println(justString)
+    
+    justString = "변경된 스트링"
+    
+    lateinit var lateString : String //위와 다르게 값을 초기화하지 않았다
+    println(lateString) //값이 안들어갔기 때문에 에러가 난다.
+    lateString = "변경된스트리밍"
+    println(lateString)
+
+    //그럼 왜 쓸까? -> 서버에서 받아온 데이터를 넣어두고 싶은데, 미리 변수를 선언해놓고 나중에 서버에서
+    //값을 받아와서 넣어줄때 주로 사용한다.
+    
+    #)lazy
+    val lazyString : String by lazy {
+        "lazyTestString"
+    }
+    println(lazyString) //lazyTestString 이 잘나온다. lazyString을 사용하면 "lazyTestString"을 변수에넣어준다
+    
+    #)lazyString을 쓰지 않으면 값 할당("lazyTestString"이 할당 안된다) 
+    val lazy123 : String by lazy {
+        println("이 친구가 만들어질 때 프린트")
+        "lazyTestString"
+    }
+    //lazyString  //안쓰는중
+
+    //두 차이점은 지연초기화는 var을 쓰고, lazy는 val을 쓴다.
+}
+==============================================================
+#) infix function
+
+fun main() {
+    println(sum(1,2))
+    println(10 sum1 20) //30
+    println("apple" sum1 "포도") //apple포도
+    println("사과" sum2 "포도") //사과포도
+    println(10 showList 20) //[10,11,12,...20]
+}
+
+//신버전
+infix fun Int.sum1(num:Int) : Int = this+num
+infix fun String.sum1(abc:String) : String = this+abc
+infix fun String.sum2(abc:String) : String {
+    return this+abc
+}
+
+infix fun Int.showList(num:Int) : List<Int> {
+    val list = mutableListOf<Int>()
+    for(i in this..num) {
+        list.add(i)
+    }
+    println(this) //10
+    return list
+}
+//구버전
+fun sum(a:Int, b:Int) : Int {
+    return a+b
+}
+==============================================================
+//scope function
+//let , with, run, apply, also
+
+let -> non null일때 동작하고, null일때 동작하지 않도록
+with -> 컨텍스트 내부에서 함수를 호출
+run -> 객체 초기화와 return값 계산이 필요할 때 주로 사용
+apply -> 값을 반환하지 않고, 객체 구성에 대해 주로 사용
+also -> 객체에 대해 추가적인 작업
+
+
+#)let
+fun main() {
+    val str : String? = "hi"
+    
+    val length = str?.let {
+        println(it)//hi
+        it.length
+    }
+    println(length) //2
+    
+    //null일때
+    val str2 : String? = null
+    val length2 = str2?.let {
+        println(it) //null
+        it.length //실행되지 않는다,
+    }
+    println(length2) //실행되지않는다.
+}
 
 
 
+#) with
+val numbers = mutableListOf("a","b","c","d")
+println(numbers.first()) //a
+println(numbers.last())  //d
+
+val firstAndLast = with(numbers) {
+    "${first() ${last()}}" // a d
+}
+println(firstAndLast)
+
+
+==============================================================
+run -> 객체 초기화와 return값 계산이 필요할 때 주로 사용
+apply -> 값을 반환하지 않고, 객체 구성에 대해 주로 사용
+also -> 객체에 대해 추가적인 작업
+
+fun main() {
+    //run
+    val service = multiPortService("www.naver.com",80)
+    val result1 = service.query(service.perpareRequest() + " to port ${service.port}")
+    
+    println(result1) //결과 query 기본 요청 url www.naver.com to port 80
+
+    val result2 = service.run {
+        port=8080
+        query(prepareRequest() + "to port $port")
+    }
+    println(result2) //결과 query 기본 요청 url www.naver.com to port 80
+}
+
+class multiPortService(var url : String, var port : Int) {
+    fun prepareRequest() : String = "기본 요청 url $url"
+    fun query(request : String) = "결과 query $request"
+    
+    
+}
+
+-----------------------
+//apply
+
+fun main() {
+    val tester1 = Person("Tester1")
+    println(tester1) //Person(name=Tester1, age=0, city=)
+    
+    tester1.age = 20
+    tester1.city = "Seoul"
+    
+    println(tester1) //Person(name=Tester1, age=0, city=Seoul)
+    
+    val tester2 = Person("Tester2").apply {
+        age = 21
+        city = "Busan"
+    }
+    println(tester2) //Person(name=Tester1, age=0, city=Busan)
+}
+
+data class Person {
+    var name : String,
+    var age : Int = 0,
+    var city : String = ""
+}
+
+class multiPortService(var url : String, var port : Int) {
+    fun prepareRequest() : String  = "기본 요청 url $url"
+    fun query(request : String) = "결과 query $request"
+}
+
+----------------------------
+//also
+
+fun main() {
+    val numbers = mutableListOf(1,2,3,4)
+    println("$numbers 여기에서 5를 추가합니다") //[1,2,3,4] 여기에서 5를 추가합니다
+    numbers.add(5)
+    println(numbers) // [1,2,3,4,5]
+    
+    val numbers2 = mutableListOf(1,2,3,4)
+    numbers2.also {
+        println("$numbers2 여기에서 5를 추가합니다") // [1,2,3,4] 여기에서 5를 추가합니다.
+    }.add(5) 
+    println(numbers2) // [1,2,3,4,5]
+}
+
+
+=============================================================
+//enum class
+
+fun main() {
+    println(Direction.NORTH) //NORTH
+    Direction.values().forEach {
+        println(it) //NORTH ..
+    }
+    
+    CustomerType.values().forEach {
+        println(it)
+    }
+}
+
+enum class Direction {
+    NORTH, SOUTH, WEST, EAST
+}
+
+enum class CustomerType {
+    A,B,C,D,VIP
+}
+==============================================================
+fun main() {
+    val direction = Direction.EAST
+    when(direction) {
+        Direction.NORTH -> {
+            println("N")
+        }
+        Direction.SOUTH -> {
+            println("S")
+        }
+        
+    }
+}
+
+enum class Direction {
+    NORTH, SOUTH, WEST, EAST
+}
+
+enum class CustomerType {
+    A,B,C,D,VIP
+}
+==============================================================
+fun main(){
+    val color = Color.RED
+    when(color) {
+        Color.RED -> {
+            println(Color.RED.rgb)
+        }
+        Color.GREEN -> {
+            println(Color.GREEN.rgb)
+        }
+    }
+    
+    println(Device.DEVICEON.status) //ON
+    Device.DEVICEON.status = "OFF"
+    println(Device.DEVICEON.status) //OFF
+}
+
+enum class Color(val rgb : String) {
+    RED("빨강"),
+    GREEN("초록"),
+    BLUE("파랑")
+}
+
+enum class Device(var status : String) {
+    DEVICEON("ON")
+    NETWORK("OFF")
+    LOCATION("SEOUL")
+}
+==============================================================
+// 여러 이메일이 담긴 리스트가 있어요!
+// 저는 구글로 가입한 사람과 네이버로 가입한 사람의 숫자와
+// 그 외의 기메일로 가입한 사람의 숫자를 보고 싶습니다.
+// @와 .을 기준으로 어느 사이트에서 들어온 사람들인지 구분을 합니다.
+// 아래와 같은 함수를 만들어보세요.
+
+fun main(){
+
+    val emailList1 = arrayListOf<String>("jay@naver.com",
+        "john@naver.com",
+        "emily@google.com",
+        "ken@google.com",
+        "minjun@kakao.com")
+    val result1 = solution(emailList1)
+    println(result1)
+    // 결과값 = {naver=2, google=2, else=1}
+
+
+    val emailList2 = arrayListOf<String>("Aiden@naver.com",
+        "Andew@naver.com",
+        "Adrian@daum.com",
+        "Asher@google.com",
+        "Austin@kakao.com",
+        "Antonio@google.com")
+    val result2 = solution(emailList2)
+    println(result2)
+    // 결과값 = {naver=2, google=2, else=2}
+
+
+}
+
+fun solution(emailList: ArrayList<String>) : Map<String, Int> { //Map형태로 리턴
+
+    var naverCount = 0
+    var googleCount = 0
+    var elseCount = 0
+
+    for(email in emailList){
+        val domain = email.split("@")[1] //[naver.com] [naver.com]
+        val emailItem = domain.split(".")[0] //위에 자른걸 . 기준으로 잘라서 첫번째꺼만
+        //println(emailItem) //naver naver google...
+
+        if(emailItem == "naver") {
+            naverCount += 1 // naverCount++ , naverCount = naverCount + 1
+        } else if(emailItem == "google"){
+            googleCount += 1
+        } else {
+            elseCount += 1
+        }
+
+    }
+
+    println(naverCount)
+    println(googleCount)
+    println(elseCount)
+
+    val resultMap = mutableMapOf<String, Int>()
+
+    resultMap["naver"] = naverCount
+    resultMap["google"] = googleCount
+    resultMap["elseCount"] = elseCount
+
+    return resultMap
+
+}
+==============================================================
+// 문자열의 숫자와 짝수(true)와 홀수(false)를 알려주는 solution을 만드세요
+
+fun main(){
+
+    val result1 = solution("abcd")
+    println(result1)
+    // [4, true]
+
+    val result2 = solution("abcde")
+    println(result2)
+    // [5, false]
+}
+
+
+fun solution(str : String) : ArrayList<String> {
+
+    // 길이 구하는 것 하나랑
+    val length = str.length
+    //println(length)
+
+    // 구해진 길이가 홀수인지 짝수인지 알려주는 기능
+
+    /*
+    var isEven = true
+    if(length % 2 == 0){
+        //println("짝수")
+        isEven = true
+    } else {
+        //println("홀수")
+        isEven = false
+    }
+    */
+
+    val isEven = length % 2 == 0
+
+    val resultArray = arrayListOf<String>(length.toString(), isEven.toString())
+
+    return resultArray
+
+}
 
 
 ==============================================================
 #)푸시알림
 앱 푸쉬서비스는 인터넷 연결도 필요하기 때문에 인터넷 퍼미션도 추가해 준다.
 <uses-permission android:name="andriod.permission.INTERNET"/>
+
+백그라운드에서도 작동할 수 있도록 퍼미션 등록
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+핸드폰을 껏다가 킨 후에도 알림이 적용될 수 있도록하는 권한
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED
+
 
 onMessageReceived() 메서드는 클라우드 서버에서 메시지를 전송하면 자동으로 호출되고
 해당메서드 안에서 메시지를 처리한다.
@@ -1385,8 +1799,424 @@ public class MainActivity extends AppCompatActivity {
 }
 
 ==========================================================================
+#) 클릭가능한 Notification을 만들면 된다.
+우선 Intent를 생성하고, Notification 클릭시에 실행할 activity를 지정한다.
+
+Intent intent = new Intent(this, MainActivity.class);
+intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVIY_SINGLE_TOP);
+
+createNotification(DEFAULT, 1, "제목", "본문", intent)
+
+void createNotification(String channelId, int id, String title, String text) {
+         NotificationCompat.Builder builder = new NotificationCompat.Builder(this,channelId)
+        .setpriority(NotificationCompat.PRIORITY_HIGH) //헤드업 알림을 위해서는 HIGH로 설정
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // 알림시 보여지는 아이콘
+        .setContentTitle(title)
+        .setContentText(text)
+        .setContentIntent(pendingIntent) // PendingIntent를 지정하면 해당 Notification은 클릭이 가능해진다. 클릭시 실행될 PendingIntent지정
+        .setTimeoutAfter(1000) // 지정한 시간 이후 알림이 사라진다.
+        .setAutoCancel(true) //true이면 알림 클릭시 화면에서 사라진다. 만약 PendingIntent가 지정되지 않았다면 알림이 클릭되지 않으므로 setAutoCancel은 동작x
+        .setStyle(new NotificationCompat.BigTextStyle().bigText(text)) //text는 한줄이 넘어가면 짤린다. 모든 텍스트를 보여주기위해서는 BigText로
+        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE); //알림시 효과음, 진동여부
+        
+    NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE)
+    notificationManager.notify(id,builder.build())
+}
+
+=========================================================================
+#)AlarmManager와 TimePicker를 이용하여 원하는 시간 선택 -> 반복알림
+
+----   ----  ----
+ 2   :  59    PM
+----   ----  ----
+
+등록(button)   해지(button)
 
 
+우선 xml을 작성한다
+#)activity.xml
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+    
+     <TimePicker
+        android:id="@+id/tp_timepicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:timePickerMode="spinner"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+ 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:onClick="regist"  //온클릭이벤트
+        android:text="등록"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button2"
+        app:layout_constraintEnd_toStartOf="@+id/button2"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tp_timepicker" />
+ 
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:onClick="unregist"   //온클릭이벤트
+        android:text="해지"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/button"
+        app:layout_constraintTop_toBottomOf="@+id/tp_timepicker" />
+ 
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+이제 정해진 시간에 실행되는 클래스를 BroadcastReceiver를 상속받을 것이다.
+#)Alarm.java
+public class Alarm extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        Toast.makeText(context, "알람~!!", Toast.LENGTH_SHORT).show();
+        Log.e("Alarm","알람입니다");
+    }
+    
+}
+
+
+#)MainActivity.java
+public class MainActivity extends AppCompatActivity {
+    private TimePicker timePicker;
+    private AlarmManager alarmManager;
+    private int hour, minute;
+    
+    @Override
+    protected void onCreate(Bundle saveInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        timePicker=findViewById(R.id.tp_timepicker); //timePicker를 변수로 받아서 밑에서 쓰자
+    }
+    
+    public void regist(View view) {
+        Intent intent = new Intent(this,Alarm.class);
+        PendingIntent pIntent = PendingIntent.getBroadcast(this,0,intent,0);
+        
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            hour = timePicker.getHour();  //내가 선택한 시간
+            minute = timePicker.getMinute();
+        }
+    
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.HOUR_OF_DAY, hour);
+    calendar.set(Calendar.MINUTE,minute);
+    calendar.set(Calendar.SECOND,0);
+    calendar.set(Calendar.MILLISECOND,0);
+    
+    //지정한 시간에 매일 알림
+    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntent);
+    }
+    
+    public void unregist(View view) {
+        Intent intent = new Intent(this,Alarm.class);
+        PendingIntent pIntent = PendingIntent.getBroadcast(this,0,intent,0);
+        alarmManager.cancel(pIntent);
+    }
+}
+=========================================================================
+#) 진행과정(한번만 호출)
+1. AlarmReceiver class 추가 (알람 이벤트를 받기 위한 broadcast receiver)
+2. AlarmManager로 알람 추가 및 삭제 코드 구현
+
+#)AndroidManifest.xml 에 아래 작성한 receiver추가
+<receiver
+    android:name=".service.AlarmReceiver"
+    android:enabled="true">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN"></action>
+    </intent-filter>
+</receiver>
+
+#) AlarmReceiver class 추가
+AlarmManager로 알람을 추가했을 때 이벤트를 받기 위한 receiver를 추가한다.
+예를들어 1분뒤로 알람을 추가하면 알람 receiver가 1분뒤 호출하게 된다.
+이때 어떤 alarm인지는 "requestCode"로 구분되기 때문에 하나의 receiver로 모든 alarm을 분기해서 처리 할 수 있다.
+
+public class AlarmReceiver extends BroadcastReceiver {
+    private static final String TAG = "AlarmReceiver";
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        int reqCode = intent.getExtras().getInt("requestCode");
+        Log.i(TAG,"onreceive: " + reqCode);
+        if(reqCode == xxx) {
+            //여기서 setAlarm
+        }
+    }
+}
+
+#) AlarmManager로 알람 추가 및 삭제코드 구현
+AlarmManager로 알람을 추가할 때 x분뒤에 알람을 울리게 할지 아니면 3시 15분 등 특정시간에 울리게 할지 두가지 방법이있다.
+RTC : 3시 15분 등 특정시간에 울리게
+ELAPSED_REALTIME_WAKEUP : 지금 시간으로 부터 x분 뒤에 울리게
+
+예를들어 현재 시간으로부터 10분뒤에 이벤트를 발생해라는 문구다
+AlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 60 * 1000 * 10,alarmIntent);
+
+public class AlarmController {
+    private static final String TAG = "AlarmController"
+    pricate Context context;
+    private static AlarmController sInstance;
+    private AlarmManager alarmMgr;
+    
+    private AlarmController(Context context) {
+        this.context = context
+        alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE;
+    }
+    
+    public void setAlarm(int reqCode, long timeMill) {
+        Log.i(TAG, "setAlarm req: " + reqCode + ", timeMill : " + timeMill);
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.putExtra(KEY_REQ_CODE, reqCode);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, reqCode, intent,0);
+        
+        alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+        SystemClock.elapsedRealtime() + timeMill, alarmIntent);
+    }
+    
+    public void cancelAlarm(int reqCode) {
+        Log.i(TAG, "cancelAlarm req: " + reqCode);
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, reqCode,intent,0);
+        
+        if(alarmMgr != null) {
+            alarmMgr.cancel(alarmIntent);
+        }
+    }
+}
+========================================================================
+#) 현재 날짜 구하기
+        Date currentTime = Calendar.getInstance().getTime();
+        SimpleDateFormat weekdayFormat = new SimpleDateFormat("EE", Locale.getDefault());
+        SimpleDateFormat dayFormat = new SimpleDateFormat("dd", Locale.getDefault());
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MM", Locale.getDefault());
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
+
+        String weekDay = weekdayFormat.format(currentTime);
+        String year = yearFormat.format(currentTime);
+        String month = monthFormat.format(currentTime);
+        String day = dayFormat.format(currentTime);
+
+        Log.d("webnautes", year + "년 " + month + "월 " + day + "일 " + weekDay + "요일");
+
+=========================================================================
+#)현재날짜출력 방법
+1. Date객체
+2. Calendar Class
+3. System Class
+
+@Override
+protected void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    //날짜 및 시간 형식 지정
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    //Date 객체 사용
+    Date date = new Date();
+    String time1 = simpleDateFormat.format(date);
+
+    //Calendar 클래스의 getTime()함수 사용
+    Calendar calendar = Calendar.getInstance();
+    String time2 = simpleDateFormat.format(calendar.getTime());
+
+    //System 클래스의 currentTimeMillis()함수 사용
+    String time3 = simpleDateFormat.format(System.currentTimeMillis());
+
+    Log.d("time", "time1 : " + time1);
+    Log.d("time", "time2 : " + time2);
+    Log.d("time", "time3 : " + time3);
+}
+
+2020-06-10 20:49:24.975 7352-7352/com.test.navermap D/time: time1 : 2020-06-10 20:49:24
+2020-06-10 20:49:24.976 7352-7352/com.test.navermap D/time: time2 : 2020-06-10 20:49:24
+2020-06-10 20:49:24.976 7352-7352/com.test.navermap D/time: time3 : 2020-06-10 20:49:24
+========================================================================
+#)특정날짜 알림 발송
+
+#)AndroidManifest.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.kwongyo.alarmtest" >
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme" >
+        <activity android:name=".MainActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Main2Activity"
+            android:label="@string/title_activity_main2"
+            android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
+        <receiver android:name=".BroadcastD"></receiver> //여기가 핵심!!!!
+    </application>
+</manifest>
+
+#)MainActivity.class
+
+public class MainActivity extends AppCompatActivity {
+    private static int ONE_MINUTE=5626;
+    @Override
+    protected void OnCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        new AlarmHATT(getApplicationContext()), Alarm();
+    }
+    
+    public class AlarmHATT {
+        private Context context;
+        public AlarmHATT(Context context) {
+            this.context = context;
+        }
+        public void Alarm() {
+            AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE); //알람매니저 받기
+            Intent intent = new Intent(MainActivity.this, BroadcastD.class); //알림이 왔을때, BroadcastD에게 방송을 해주기 위해서 명시적으로 알려줌
+            
+            PendingIntent sender = PendingIntent.getBroadcast(MainActivity.this,0,intent,0); 
+            
+            Calendar calendar = Calendar.getInstance();
+            
+            calendar.set(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH), calendar.get(Calendar.DATE),23,12,0);
+            
+            //알람예약
+            //RTC_WAKEUP : 대기 상태일 경우 단말기를 활성상태로 전환한후 작업을 수행
+            am.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),sender);
+        }
+        
+    }
+}
+
+
+#)BroadcastD.class
+
+public class BroadcastD extends BroadcastReceiver {
+    String INTENT_ACTION = Intent.ACTION_BOOT_COMPLETED;
+    
+    @Override
+    public void onReceive(Context context, Intent intent) { //알람시간이 되었을 때 onReceive를 호출한다.
+        //노티 서비스 받고
+        NotificationManager notificationmanager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context,0,new Intent(context, MainActivity.class), PendingIntent.UPDATE_CURRENT);
+        Notification.Builder builder = new Notification.Builder(context);
+        builder.setSmallIcon(R.drawble.on).setTicker("HETT").setWhen(System.currentTimeMillis())
+               .setNumber(1).setContentTitle("푸시 제목").setContentText("푸시 내용")
+               .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE).setContentIntent(PendingIntent).setAutoCanel(true);
+        notificationmanager.notify(1,builder.build());
+        
+    }
+}
+=========================================================================
+#) PendingIntent는 생성자가 없고 아래 세개의 메소드들에 의해 객체가 생성된다.
+.getActivity(Context, int, Intent, int)
+.getBroadcast(Context, int, Intent, int)
+.getService(Context, int, Intent, int)
+
+그런데 이들 세 개의 메소드 중 어느 메소드에 의해서 생성된 PendingIntent 객체냐에 따라서
+그 객체가 activity를 실행시킬지 서비스를 수행할지, 방송을 실행시킬지가 결정된다.
+
+======================================================================
+#)intent : 안드로이드 OS에게 저 이거 실행시켜주세여!! 시키는 것이다.
+           이 부분에서 설정된 Activity로 이동할 수 있고, data도 보낼 수 있다.
+
+#)intent가 단순하게 이거 실행시켜줘 !! 라고 한다면
+pending intent는 메시지(예를들어 notification)를 통해 activity를 실행할수 있는데 
+이때 사용하는 것이 PendingIntent이다.
+pendingIntenteh Activity로 데이터를 전달할 수도 있다.
+
+======================================================================
+// Activity란?
+안드로이드에서 액티비티는 앱의 화면을 말한다.
+사용자가 직접 누를 수 있는 화면이다. 하지만, 개발자 관점에서는 activity는 두가지로 볼수있다.
+기능을 담당하는 java파일과 ui를 담당하는 xml파일이 있다. 
+
+** 하나의 java파일에서 하나의 xml이 연결되어 하나의 화면을 이룬다.
+
+예를들어 xml파일속에 버튼이 있다면 그 버튼의 위치나 색깔 등 표면적인 것들은 xml파일안에서 수정한다.
+하지만 클릭 했을 때의 동작은 그 xml파일에 해당하는 java파일에서 기능을 추가한다.
+
+#) 새로운 화면을 만들고 시작화면으로 세팅하고 싶다면??
+xml파일을 원하는 대로 만들었다면 java파일에서 연결을 시켜줘야한다. -> setContentView()를 사용
+
+** 새로만든 파일을 AndroidManifest.xml에 명시해줘야한다. 
+넣지않으면 안드로이드가 새로운 파일을 인식하지 못한다.
+
+//새로만든 화면을 시작화면으로 바꾸고 싶다면??
+//AndroidManifest.xml 안에 <intent-filter>가 있다. 이 안에 <category>를 사용해서 
+//LAUNCHER 인지 DEFAULT인지 구별할 수 있게 되었다. 
+//LAUNCHER로 구분되어 있는 클래스(java파일)가 시작화면을 뜻하고 DEFAULT는 그 외 입니다.
+//시작화면을 제외한 나머지 부분에서는 <category>를 안해줘도 된다!!! 자동으로 DEFAULT로 명시
+
+==========================================================================
+#) 생명주기 메소드 호출 순서
+- 시작할 때 : onCreate -> onStart -> onResume
+- 화면 회전할 때 : onPause -> onStop -> onDestroy -> onCreate -> onStart -> onResume
+- 홈 버튼 클릭 시 : onPause -> onStop
+- 홈 이동 후 다시 돌아올 때 : onRestart -> onStart -> onResume
+- 백 버튼 클릭하여 액티비티 종료 시 : onPause -> onStop -> onDestroy
+
+===========================================================================
+인텐트는 명시적 인텐트(Explicit Intent)와 암시적 인텐트(Implicit)가있다
+
+1. 명시적 인텐트(MainActivity에서 button을 눌렀을 때 SecondActivity로 화면전환하는 코드다
+/*MainActivity*/
+ 
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+ 
+ 
+public class MainActivity extends Activity implements View.OnClickListener{
+Button button;
+ @Override
+ protected void onCreate(Bundle savedInstanceState) {
+ super.onCreate(savedInstanceState);
+ setContentView(R.layout.activity_main);
+ button = (Button)findViewById(R.id.button);
+ button.setOnClickListener(this);
+ }
+ 
+ @Override
+ public void onClick(View v) {
+ Intent intent = new Intent(getApplicationContext(),SecondActivity.class);
+ startActivity(intent);
+ }
+}
+=============================================================================
 
 
 
