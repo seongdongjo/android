@@ -2425,7 +2425,1700 @@ public void onRequestPermissionsResult(int requestCode, @NonNull String[] permis
     }
 }
 ===========================================================
+#)푸시알림
+앱 푸쉬서비스는 인터넷 연결도 필요하기 때문에 인터넷 퍼미션도 추가해 준다.
+<uses-permission android:name="andriod.permission.INTERNET"/>
 
+백그라운드에서도 작동할 수 있도록 퍼미션 등록
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+핸드폰을 껏다가 킨 후에도 알림이 적용될 수 있도록하는 권한
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED
+
+
+onMessageReceived() 메서드는 클라우드 서버에서 메시지를 전송하면 자동으로 호출되고
+해당메서드 안에서 메시지를 처리한다.
+
+#) Head Up Notification
+Android O (API26)부터는 Notification을 하려면 Channel을 먼저 생성해주어야한다
+
+//channel Id : 고유한 ID여야 하고 길면 잘릴 수 있다.
+//Importance : 헤드업 알림이 되어야 한다면 IMPORTANCE_HIGH로 설정하고, 아니면 IMPOTANCE_DEFAULT로 설정한다.
+
+//채널 생성함수
+void createNotificationChannel(String channelId, String channelName, int importance) {
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.0) {
+        Notification notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.createNotificationChannel(new NotificationChannel(channelId, channelName, importance))
+    }
+}
+
+//채널 생성
+createNotificationChannel(DEFAULT, "default channel", NotificationManager.IMPORTANCE_HIGH)
+
+
+//Notification생성함수
+void createNotification(String channelId, int id, String title, String text) {
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(this,channelId)
+        .setpriority(NotificationCompat.PRIORITY_HIGH) //헤드업 알림을 위해서는 HIGH로 설정
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // 알림시 보여지는 아이콘
+        .setContentTitle(title)
+        .setContentText(text)
+        .setTimeoutAfter(1000) // 지정한 시간 이후 알림이 사라진다.
+        .setStyle(new NotificationCompat.BigTextStyle().bigText(text)) //text는 한줄이 넘어가면 짤린다. 모든 텍스트를 보여주기위해서는 BigText로
+        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE); //알림시 효과음, 진동여부
+        
+    NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE)
+    notificationManager.notify(id,builder.build())  //notify() : 생성한 notification을 등록한다. id가 같으면 1개의 notification만 보여짐
+        
+}
+
+//해당 채널로 Notification 생성
+createNotification(DEFAULT, 1, "제목", "본문")
+=====================================================================================
+public class MainActivity extends AppCompatActivity {
+    private final String DEFAULT = "DEFAULT";
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        //Head Up Display를 위해 HIGH로 설정
+        createNotificationChannel(DEFAULT, "default channel", NotificationManager.IMPORTANCE_HIGH);
+        createNotification(DEFAULT,1,"title","text")
+    }
+    
+    void createNotificationChannel(String channelId, String channelName, int importance) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(new NotificationChannel(channelId, channelName, importance));
+        }
+    }
+    
+    void createNotification(String channelId, int id, String title, String text) {
+         NotificationCompat.Builder builder = new NotificationCompat.Builder(this,channelId)
+        .setpriority(NotificationCompat.PRIORITY_HIGH) //헤드업 알림을 위해서는 HIGH로 설정
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // 알림시 보여지는 아이콘
+        .setContentTitle(title)
+        .setContentText(text)
+        .setTimeoutAfter(1000) // 지정한 시간 이후 알림이 사라진다.
+        .setStyle(new NotificationCompat.BigTextStyle().bigText(text)) //text는 한줄이 넘어가면 짤린다. 모든 텍스트를 보여주기위해서는 BigText로
+        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE); //알림시 효과음, 진동여부
+        
+    NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE)
+    notificationManager.notify(id,builder.build())
+    }
+    
+    void destroyNotification(int id) {
+        NotificationManager notificationManager = (Notification)getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.cancel(id)
+    }
+}
+
+==========================================================================
+#) 클릭가능한 Notification을 만들면 된다.
+우선 Intent를 생성하고, Notification 클릭시에 실행할 activity를 지정한다.
+
+Intent intent = new Intent(this, MainActivity.class);
+intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVIY_SINGLE_TOP);
+
+createNotification(DEFAULT, 1, "제목", "본문", intent)
+
+void createNotification(String channelId, int id, String title, String text) {
+         NotificationCompat.Builder builder = new NotificationCompat.Builder(this,channelId)
+        .setpriority(NotificationCompat.PRIORITY_HIGH) //헤드업 알림을 위해서는 HIGH로 설정
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // 알림시 보여지는 아이콘
+        .setContentTitle(title)
+        .setContentText(text)
+        .setContentIntent(pendingIntent) // PendingIntent를 지정하면 해당 Notification은 클릭이 가능해진다. 클릭시 실행될 PendingIntent지정
+        .setTimeoutAfter(1000) // 지정한 시간 이후 알림이 사라진다.
+        .setAutoCancel(true) //true이면 알림 클릭시 화면에서 사라진다. 만약 PendingIntent가 지정되지 않았다면 알림이 클릭되지 않으므로 setAutoCancel은 동작x
+        .setStyle(new NotificationCompat.BigTextStyle().bigText(text)) //text는 한줄이 넘어가면 짤린다. 모든 텍스트를 보여주기위해서는 BigText로
+        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE); //알림시 효과음, 진동여부
+        
+    NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE)
+    notificationManager.notify(id,builder.build())
+}
+
+=========================================================================
+#)AlarmManager와 TimePicker를 이용하여 원하는 시간 선택 -> 반복알림
+
+----   ----  ----
+ 2   :  59    PM
+----   ----  ----
+
+등록(button)   해지(button)
+
+
+우선 xml을 작성한다
+#)activity.xml
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+    
+     <TimePicker
+        android:id="@+id/tp_timepicker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:timePickerMode="spinner"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+ 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:onClick="regist"  //온클릭이벤트
+        android:text="등록"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button2"
+        app:layout_constraintEnd_toStartOf="@+id/button2"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tp_timepicker" />
+ 
+    <Button
+        android:id="@+id/button2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:onClick="unregist"   //온클릭이벤트
+        android:text="해지"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/button"
+        app:layout_constraintTop_toBottomOf="@+id/tp_timepicker" />
+ 
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+이제 정해진 시간에 실행되는 클래스를 BroadcastReceiver를 상속받을 것이다.
+#)Alarm.java
+public class Alarm extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        Toast.makeText(context, "알람~!!", Toast.LENGTH_SHORT).show();
+        Log.e("Alarm","알람입니다");
+    }
+    
+}
+
+
+#)MainActivity.java
+public class MainActivity extends AppCompatActivity {
+    private TimePicker timePicker;
+    private AlarmManager alarmManager;
+    private int hour, minute;
+    
+    @Override
+    protected void onCreate(Bundle saveInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        timePicker=findViewById(R.id.tp_timepicker); //timePicker를 변수로 받아서 밑에서 쓰자
+    }
+    
+    public void regist(View view) {
+        Intent intent = new Intent(this,Alarm.class);
+        PendingIntent pIntent = PendingIntent.getBroadcast(this,0,intent,0);
+        
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            hour = timePicker.getHour();  //내가 선택한 시간
+            minute = timePicker.getMinute();
+        }
+    
+    Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.HOUR_OF_DAY, hour);
+    calendar.set(Calendar.MINUTE,minute);
+    calendar.set(Calendar.SECOND,0);
+    calendar.set(Calendar.MILLISECOND,0);
+    
+    //지정한 시간에 매일 알림
+    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pIntent);
+    }
+    
+    public void unregist(View view) {
+        Intent intent = new Intent(this,Alarm.class);
+        PendingIntent pIntent = PendingIntent.getBroadcast(this,0,intent,0);
+        alarmManager.cancel(pIntent);
+    }
+}
+=========================================================================
+#) 진행과정(한번만 호출)
+1. AlarmReceiver class 추가 (알람 이벤트를 받기 위한 broadcast receiver)
+2. AlarmManager로 알람 추가 및 삭제 코드 구현
+
+#)AndroidManifest.xml 에 아래 작성한 receiver추가
+<receiver
+    android:name=".service.AlarmReceiver"
+    android:enabled="true">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN"></action>
+    </intent-filter>
+</receiver>
+
+#) AlarmReceiver class 추가
+AlarmManager로 알람을 추가했을 때 이벤트를 받기 위한 receiver를 추가한다.
+예를들어 1분뒤로 알람을 추가하면 알람 receiver가 1분뒤 호출하게 된다.
+이때 어떤 alarm인지는 "requestCode"로 구분되기 때문에 하나의 receiver로 모든 alarm을 분기해서 처리 할 수 있다.
+
+public class AlarmReceiver extends BroadcastReceiver {
+    private static final String TAG = "AlarmReceiver";
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        int reqCode = intent.getExtras().getInt("requestCode");
+        Log.i(TAG,"onreceive: " + reqCode);
+        if(reqCode == xxx) {
+            //여기서 setAlarm
+        }
+    }
+}
+
+#) AlarmManager로 알람 추가 및 삭제코드 구현
+AlarmManager로 알람을 추가할 때 x분뒤에 알람을 울리게 할지 아니면 3시 15분 등 특정시간에 울리게 할지 두가지 방법이있다.
+RTC : 3시 15분 등 특정시간에 울리게
+ELAPSED_REALTIME_WAKEUP : 지금 시간으로 부터 x분 뒤에 울리게
+
+예를들어 현재 시간으로부터 10분뒤에 이벤트를 발생해라는 문구다
+AlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 60 * 1000 * 10,alarmIntent);
+
+public class AlarmController {
+    private static final String TAG = "AlarmController"
+    pricate Context context;
+    private static AlarmController sInstance;
+    private AlarmManager alarmMgr;
+    
+    private AlarmController(Context context) {
+        this.context = context
+        alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE;
+    }
+    
+    public void setAlarm(int reqCode, long timeMill) {
+        Log.i(TAG, "setAlarm req: " + reqCode + ", timeMill : " + timeMill);
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.putExtra(KEY_REQ_CODE, reqCode);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, reqCode, intent,0);
+        
+        alarmMgr.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+        SystemClock.elapsedRealtime() + timeMill, alarmIntent);
+    }
+    
+    public void cancelAlarm(int reqCode) {
+        Log.i(TAG, "cancelAlarm req: " + reqCode);
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(context, reqCode,intent,0);
+        
+        if(alarmMgr != null) {
+            alarmMgr.cancel(alarmIntent);
+        }
+    }
+}
+========================================================================
+#) 현재 날짜 구하기
+        Date currentTime = Calendar.getInstance().getTime();
+        SimpleDateFormat weekdayFormat = new SimpleDateFormat("EE", Locale.getDefault());
+        SimpleDateFormat dayFormat = new SimpleDateFormat("dd", Locale.getDefault());
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MM", Locale.getDefault());
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
+
+        String weekDay = weekdayFormat.format(currentTime);
+        String year = yearFormat.format(currentTime);
+        String month = monthFormat.format(currentTime);
+        String day = dayFormat.format(currentTime);
+
+        Log.d(year + "년 " + month + "월 " + day + "일 " + weekDay + "요일");
+
+=========================================================================
+#)현재날짜출력 방법
+1. Date객체
+2. Calendar Class
+3. System Class
+
+@Override
+protected void onCreate(Bundle savedInstanceState)
+{
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+
+    //날짜 및 시간 형식 지정
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    //Date 객체 사용
+    Date date = new Date();
+    String time1 = simpleDateFormat.format(date);
+
+    //Calendar 클래스의 getTime()함수 사용
+    Calendar calendar = Calendar.getInstance();
+    String time2 = simpleDateFormat.format(calendar.getTime());
+
+    //System 클래스의 currentTimeMillis()함수 사용
+    String time3 = simpleDateFormat.format(System.currentTimeMillis());
+
+    Log.d("time", "time1 : " + time1);
+    Log.d("time", "time2 : " + time2);
+    Log.d("time", "time3 : " + time3);
+}
+
+2020-06-10 20:49:24.975 7352-7352/com.test.navermap D/time: time1 : 2020-06-10 20:49:24
+2020-06-10 20:49:24.976 7352-7352/com.test.navermap D/time: time2 : 2020-06-10 20:49:24
+2020-06-10 20:49:24.976 7352-7352/com.test.navermap D/time: time3 : 2020-06-10 20:49:24
+========================================================================
+#)특정날짜 알림 발송
+
+#)AndroidManifest.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.kwongyo.alarmtest" >
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme" >
+        <activity android:name=".MainActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Main2Activity"
+            android:label="@string/title_activity_main2"
+            android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
+        <receiver android:name=".BroadcastD"></receiver> //여기가 핵심!!!!
+    </application>
+</manifest>
+
+#)MainActivity.class
+
+public class MainActivity extends AppCompatActivity {
+    private static int ONE_MINUTE=5626;
+    @Override
+    protected void OnCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        new AlarmHATT(getApplicationContext()), Alarm();
+    }
+    
+    public class AlarmHATT {
+        private Context context;
+        public AlarmHATT(Context context) {
+            this.context = context;
+        }
+        public void Alarm() {
+            AlarmManager am = (AlarmManager)getSystemService(Context.ALARM_SERVICE); //알람매니저 받기
+            Intent intent = new Intent(MainActivity.this, BroadcastD.class); //알림이 왔을때, BroadcastD에게 방송을 해주기 위해서 명시적으로 알려줌
+            
+            PendingIntent sender = PendingIntent.getBroadcast(MainActivity.this,0,intent,0); 
+            
+            Calendar calendar = Calendar.getInstance();
+            
+            calendar.set(calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH), calendar.get(Calendar.DATE),23,12,0);
+            
+            //알람예약
+            //RTC_WAKEUP : 대기 상태일 경우 단말기를 활성상태로 전환한후 작업을 수행
+            am.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),sender);
+        }
+        
+    }
+}
+
+
+#)BroadcastD.class
+
+public class BroadcastD extends BroadcastReceiver {
+    String INTENT_ACTION = Intent.ACTION_BOOT_COMPLETED;
+    
+    @Override
+    public void onReceive(Context context, Intent intent) { //알람시간이 되었을 때 onReceive를 호출한다.
+        //노티 서비스 받고
+        NotificationManager notificationmanager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context,0,new Intent(context, MainActivity.class), PendingIntent.UPDATE_CURRENT);
+        Notification.Builder builder = new Notification.Builder(context);
+        builder.setSmallIcon(R.drawble.on).setTicker("HETT").setWhen(System.currentTimeMillis())
+               .setNumber(1).setContentTitle("푸시 제목").setContentText("푸시 내용")
+               .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE).setContentIntent(PendingIntent).setAutoCanel(true);
+        notificationmanager.notify(1,builder.build());
+        
+    }
+}
+=========================================================================
+#) PendingIntent는 생성자가 없고 아래 세개의 메소드들에 의해 객체가 생성된다.
+.getActivity(Context, int, Intent, int)
+.getBroadcast(Context, int, Intent, int)
+.getService(Context, int, Intent, int)
+
+그런데 이들 세 개의 메소드 중 어느 메소드에 의해서 생성된 PendingIntent 객체냐에 따라서
+그 객체가 activity를 실행시킬지 서비스를 수행할지, 방송을 실행시킬지가 결정된다.
+
+======================================================================
+#)intent : 안드로이드 OS에게 저 이거 실행시켜주세여!! 시키는 것이다.
+           이 부분에서 설정된 Activity로 이동할 수 있고, data도 보낼 수 있다.
+
+#)intent가 단순하게 이거 실행시켜줘 !! 라고 한다면
+pending intent는 메시지(예를들어 notification)를 통해 activity를 실행할수 있는데 
+이때 사용하는 것이 PendingIntent이다.
+pendingIntenteh Activity로 데이터를 전달할 수도 있다.
+
+======================================================================
+// Activity란?
+안드로이드에서 액티비티는 앱의 화면을 말한다.
+사용자가 직접 누를 수 있는 화면이다. 하지만, 개발자 관점에서는 activity는 두가지로 볼수있다.
+기능을 담당하는 java파일과 ui를 담당하는 xml파일이 있다. 
+
+** 하나의 java파일에서 하나의 xml이 연결되어 하나의 화면을 이룬다.
+
+예를들어 xml파일속에 버튼이 있다면 그 버튼의 위치나 색깔 등 표면적인 것들은 xml파일안에서 수정한다.
+하지만 클릭 했을 때의 동작은 그 xml파일에 해당하는 java파일에서 기능을 추가한다.
+
+#) 새로운 화면을 만들고 시작화면으로 세팅하고 싶다면??
+xml파일을 원하는 대로 만들었다면 java파일에서 연결을 시켜줘야한다. -> setContentView()를 사용
+
+** 새로만든 파일을 AndroidManifest.xml에 명시해줘야한다. 
+넣지않으면 안드로이드가 새로운 파일을 인식하지 못한다.
+
+//새로만든 화면을 시작화면으로 바꾸고 싶다면??
+//AndroidManifest.xml 안에 <intent-filter>가 있다. 이 안에 <category>를 사용해서 
+//LAUNCHER 인지 DEFAULT인지 구별할 수 있게 되었다. 
+//LAUNCHER로 구분되어 있는 클래스(java파일)가 시작화면을 뜻하고 DEFAULT는 그 외 입니다.
+//시작화면을 제외한 나머지 부분에서는 <category>를 안해줘도 된다!!! 자동으로 DEFAULT로 명시
+
+==========================================================================
+#) 생명주기 메소드 호출 순서
+- 시작할 때 : onCreate -> onStart -> onResume
+- 화면 회전할 때 : onPause -> onStop -> onDestroy -> onCreate -> onStart -> onResume
+- 홈 버튼 클릭 시 : onPause -> onStop
+- 홈 이동 후 다시 돌아올 때 : onRestart -> onStart -> onResume
+- 백 버튼 클릭하여 액티비티 종료 시 : onPause -> onStop -> onDestroy
+
+===========================================================================
+인텐트는 명시적 인텐트(Explicit Intent)와 암시적 인텐트(Implicit)가있다
+
+1. 명시적 인텐트(MainActivity에서 button을 눌렀을 때 SecondActivity로 화면전환하는 코드다
+/*MainActivity*/
+ 
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+ 
+ 
+public class MainActivity extends Activity implements View.OnClickListener{
+Button button;
+ @Override
+ protected void onCreate(Bundle savedInstanceState) {
+ super.onCreate(savedInstanceState);
+ setContentView(R.layout.activity_main);
+ button = (Button)findViewById(R.id.button);
+ button.setOnClickListener(this);
+ }
+ 
+ @Override
+ public void onClick(View v) {
+ Intent intent = new Intent(getApplicationContext(),SecondActivity.class);
+ startActivity(intent);
+ }
+}
+=============================================================================
+//여기서부터 추가
+최신버전의 api를 사용하면 minSdkVersion에서 지원하지 않는 API라고 경고가 나올때가 있다.
+
+해결방법은 2가지다
+1. minSdkVersion을 높이는 방법
+ - 최신 버전의 OS가 탑재된 스마트폰만 지원한다.
+ - 구버전의 OS가 탑재된 스마트폰은 지원하지 못한다.
+
+2. 스마트폰의 OS 버전을 체크하여 분기처리한다.
+ - 최신버전의 OS가 탑재된 스마트폰은 최신API를 사용하도록 설계하고,
+ - 구버전의 OS가 탑재된 스마트폰은 다른 대체 코드 사용한다.
+ 
+#)앱이 구동되고있는 장치의 안드로이드 OS버전 -> Build.Version.SDK_INT 로 취득가능
+  폰의 각 OS버전을 취득할려면 뒤에 OS코드명을 입력하면된다.
+  Build.VERSION_CODES.LOLLOPOP
+  
+3. 처리방법
+if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) { //아니면 바로 원하는 API레벨 써서 비교해도된다.
+	//LOLLIPOP 이상 버전의 장치인 경우, 최신 API사용
+}
+else {
+   //LOLLIPOP 미만 버전의 장치인 경우, 대체 API사용
+}
+
+
+1. 버전코드 숫자를 쓰는 법
+if(Build.VERSION.SDK_INT >= 21){
+    // 원하는 동작
+}
+ 
+
+2. 버전코드명을 쓰는 법
+if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+    // 원하는 동작
+}
+=======================================================================
+버전				(코드명)별칭	API Level
+4.0 / 4.0.3		(I)아이스크림	14, 15
+4.1 / 4.2 / 4.3	(J)젤리빈		16, 17, 18
+4.4 / 4.4Wear	(K)킷캣		19, 20
+5.0 / 5.1		(L)롤리팝		21, 22
+6				(M)마시멜로우	23
+7.0 / 7.1 / 7.2	(N)누가		24, 25
+8.0 / 8.1		(O)오레오		26, 27
+9				(P)파이		28
+10				(Q)퀸 케이크	29
+11				(R)레드 벨벳 케이크	30
+=======================================================================
+#)targetSdkVersion
+앱이 기기에서 동작할 때 사용되는 Android API 버전을 의미
+앱은 기본적으로 targetSdkVersion에 명시된 API버전을 기준으로 동작한다.
+
+1. OS version > targetSdkVersion
+기기의 OS 버전 : API 26
+앱의 targetSdkVersion : API 24
+
+해당 기기는 안드로이드 API 26 에서 제공하는 기능을 모두 사용할 수 있는 기기이다. 여기서 포인트는 사용할 수 있다는 것이지, 항상 해당 버전의 기능만 사용한다는 의미가 아니라는 것이다.
+위 사례처럼 앱이 targetSdkVersion 값을 24 로 정했을 경우, 기기는 API 26 버전에서 제공하는 기능을 사용할 수 있지만 앱은 API 24 베이스로 동작한다.
+
+2. OS version == targetSdkVersion
+기기의 OS 버전 : API 26
+앱의 targetSdkVersion : API 26
+이 경우는 os 와 target 이 동일하므로, 앱이 해당 기기에서 API 26 버전 베이스로 동작한다.
+
+3. OS version < targetSdkVersion
+기기의 OS 버전 : API 26
+앱의 targetSdkVersion : API 27
+이 경우는 보통 국내 제조사들의 OS 업데이트가 늦기 때문에 발생될 수 있는 상황이다.
+
+앱은 기기의 OS 버전인 API 26 베이스로 동작한다.
+=========================================================================
+#)minSdkVersion
+어플리케이션이 지원할 수 있는 가장 낮은 API Version을 의미한다.
+배포 시 사용자의 디바이스에 앱이 설치될 수 있는지를 결정하는 요소이다.
+=========================================================================
+#)안드로이드는 상위호환성을 중요시하기때문에 compileSdkVersion, minSdkVersion, targetSdkVersion 라는 개념이 있습니다.
+
+- 상위호환성
+예전 버전이 최신 단말기에서 실행이 잘된다면 '상위 호환'
+예를들면, 최신 단말기에서 핀치 투 줌(터치로 확대/축소)인 기능이 나왔을때 예전 버전을 실행해도 핀치 투 줌이 동작하면 상위호환이 된다는 말입니다.
+
+- 하위호환성
+이전 버전에서 만든 입력값을 처리할 수 있다면 '하위 호환'
+이전 버전에서 만든 메소드를 다음 버전에 삭제안하고 그대로 가져간다는 말입니다.
+
+#)compileSdkVersion
+컴파일 시 사용되는 Android API 버전
+
+보통 최신 API가 나오면 compileSdkVersion을 먼저 올려서, 최신API에 대한 대응이 완료된 후 targetSdkVersion을 올린다.
+추가로 gradle 내에 buildToolsVersion 값이 있는데, 정상적인 빌드를 위해 compileSdkVersion 을 올릴 때는 같이 최신버전으로 맞춰주는 것을 권장한다.
+왜냐하면 빌드과정중에 컴파일 과정도 포함되기 때문이다.
+
+#)에러사항
+build.gradle에 최신버전으로 라이브러리를 추가하면 빨간줄 에러가 뜨는데
+예를들어 compileSdkVersion이 23인데 25버전의 라이브러리를 추가했다는 것이다.
+그래서 compile버전을 25로 바꾼다.
+android {
+	compileSdkVersion 25
+	buildToolsVersion "23.0.3"
+
+근데 buildToolsVersion은 23인데 25로 안바꿔도되남??
+compile이 25버전이라고해서 buildTools도 25버전이 있다는건아니다. 확인은 cmd + ;  -> app -> properties에 buildToolsVersion콤보박스를 보면 최신버전을 알수있다.
+
+minSdkVersion는 앱이 실행될 수 있는 최소 API 버전을 지정한다. 
+예를 들면, minSdkVersion를 16으로 지정하여 앱을 컴파일하면 API 16 버전 이상의 안드로이드에서 모두 실행될 수 있다. 
+여기서, compileSdkVersion나 buildToolsVersion는 16일 필요가 없고 최신 버전으로 설정하면 된다.
+
+========================================================================
+#)minSdkVersion
+App을 실행할 때 요구되는 API level이다. 이거보다 낮으면 설치할 수 없다.
+
+#)targetSdkVersion
+해당 targetSdkVersion에서 개발자가 test를 완료했다는 의미
+targetSdkVersion보다 높은 sdkVersion에서는 동일한 행동을 보장할수없다.(실행은 가능)
+
+#)compileSdkVersion
+gradle에서 app을 어떤 sdk로 compile할지 설정하는 value
+설정한 sdk에서 제공하는 api를 사용하겠다는 의미
+항상최신으로 하는게 좋음
+
+=======================================================================
+빌드(Build)와 컴파일(Compile)의 차이점
+빌드와 컴파일은 비슷한 것 같지만 서로 다른 의미를 가집니다.
+
+컴파일은 개발자가 작성한 원시 코드를 컴퓨터가 이해할 수 있는 실행 코드로 변환하는 과정입니다. 
+소스 코드를 컴파일하면 컴파일러는 코드를 분석하고 문법 오류와 논리 오류를 찾아서 개발자에게 알려줍니다. 
+컴파일러는 최종 실행 파일을 만들기 위해 소스 코드를 목적 파일(object file)로 변환하고, 목적 파일을 링크(link)하여 실행 파일을 생성합니다.
+
+반면에 빌드는 컴파일을 비롯하여 여러가지 작업을 통해 최종적으로 배포 가능한 소프트웨어를 만드는 과정을 의미합니다. 
+빌드는 소스 코드를 컴파일하고, 라이브러리를 추가하고, 리소스 파일을 처리하고, 테스트를 실행하고, 배포를 위한 실행 파일이나 패키지를 생성하는 등의 과정을 포함합니다. 
+
+그러므로 컴파일은 소스 코드를 실행 파일로 변환하는 단계 중 하나라 할 수 있고 
+빌드는 컴파일을 비롯한 다양한 작업을 포함하여 최종적으로 배포 가능한 소프트웨어를 생성하는 과정이라 할 수 있습니다.
+
+========================================================================
+#)buildToosVersion과 compileSdkVersion과의 관계
+buildToolsVersion과 compileSdkVersion은 독립적인 값이지만 연관되어 있습니다.
+
+compileSdkVersion은 컴파일러에게 사용할 API 레벨을 알려주기위해 안드로이드 SDK 버전을 지정합니다. 
+buildToolsVersion은 안드로이드 스튜디오가 사용할 Gradle 빌드 도구 버전을 지정하여 빌드작업을 수행하고 다른 빌드 도구 기능을 제공합니다.
+
+안드로이드 앱의 빌드는 buildToolsVersion으로 지정된 Gradle 빌드 도구가 빌드 작업을 수행하고 
+빌드 과정중에 하나인 컴파일 과정 중에 Gradle은 compileSdkVersion을 확인하고 이를 기반으로 소스 코드를 컴파일합니다.
+
+그러므로 buildToolsVersion은 컴파일러를 포함한 빌드 도구의 버전을 지정하므로 compileSdkVersion이 빌드 도구에서 올바르게 처리될 수 있도록 지정되어야 합니다. 
+buildToolsVersion은 안드로이드 SDK와는 직접적인 관련이 없지만, SDK에 대한 의존성을 가지고 있습니다. 따라서 이 두 매개 변수를 동일한 버전으로 설정하는 것이 좋습니다.
+
+=========================================================================
+- minSdkVersion : 앱이 실행될 수 있는 최소한의 API 레벨을 일컫는다. minSdkVersion API 레벨 미만의 디바이스는 앱 설치가 안 된다. 
+
+- compileSdkVersion : 컴파일 시에 사용할 버전을 일컫는다. 컴파일 시에 어느 버전의 android.jar을 사용할 지 정한다. 
+예로 소스코드에 API Level 21부터 추가된 메서드를 이용하고 compileSdkVersion을 19로 지정한 경우 컴파일 할 때 해당 메서드가 존재하지 않는다는 오류가 납니다. 
+
+- targetSdkVersion : 앱 실행 시 이용되는 설정이다. 실제 API Level에 따른 분기를 코딩할 때 targetSdkVersion을 보고 처리를 나눈다. 
+따라서 targetSdkVersion이 바뀌면 앱의 동작이 달라질 수 있다. 만약 targetSdkversion을 지정하지 않으면 minSdkVersion과 동일한 값으로 지정된다.
+
+=========================================================================
+#)컴포넌트란?
+한마디로 정의하면 애플리케이션의 구성요소라고 할 수 있다.
+컴포넌트 여러 개를 조합하여 하나의 앱을 만든다.
+안드로이드에서 컴포넌트는 클래스로 구현한다.
+하지만 모든 클래스가 컴포넌트인 것은 아니다.
+이들간의 통신은 인텐트를 이용한다.
+
+- 클래스 구분
+1. 일반 클래스 : 생명주기 관리를 개발자 코드에서 한다.
+2. 컴포넌트 클래스 : 생명주기를 안드로이드 시스템에서 관리한다.
+
+#)안드로이드 컴포넌트 종류
+안드로이드의 컴포넌트는 총 4가지이다.
+
+1. 액티비티
+2. 서비스
+3. 콘텐츠 프로바이더
+4. 브로드캐스트 시버
+
+- 액티비티(Activity)?
+화면을 구성하는 컴포넌트이다.
+앱의 화면을 출력하려면 액티비티 컴포넌트를 만들어야 한다.
+Activity클래스를 상속받아 사용한다.
+자바나 코틀린 소스에서 AppCompatActivity(안드로이드 하위 버전을 지원하는 Activity) 클래스를 상속받고 있어야 액티비티로 이용할 수 있습니다.
+생명주기를 이용하여 원하는 기능 구현(onCreate..)
+
+#)샘플코드
+class MainActivity : AppCompatActivity() { 
+    override fun onCreate(savedInstanceState: Bundle?) { 
+        super.onCreate(savedInstanceState) 
+    } 
+}
+
+
+- 서비스(Service)?
+백그라운드 작업을 하는 컴포넌트이다.
+Service클래스를 상속받아서 사용한다.
+
+Service는 안드로이드 Application을 구성하는 4가지 컴포넌트 중에 하나이며, Background(화면뒷단)에서 동작하는 컴포넌트이다.
+Activity가 종료되어 있는 상태에서도 동작하기 위해서 만들어진 컴포넌트이며 mp3 플레이어 같이 화면이 종료되도 계속 재생될 때 사용이 필요하다.
+Service는 기본적으로 UI가 동작하는 main thread에서 동작한다. 그래서 Service 내에서 별도의 Thread를 생성해서 작업을 수행해야 한다.
+
+onStartCommand 와 onBind 로 나뉘게 된다.
+#)onStartCommand의 경우
+- 액티비티 같은 앱 컴포넌트가 startService()를 호출하면, 서비스는 실행되면(started), 그 서비스를 실행한 컴포넌트가 종료되도 할 일을 모두 마칠 때까지 서비스는 종료되지 않는다. 
+- 따라서 서비스가 할일을 다하여 종료시키고 싶다면, 서비스 내에서 stopSelf()를 호출하여 스스로 종료되도록 하거나, 다른 컴포넌트에서 stopService()를 호출하여 종료시켜한다.
+- 액티비티 등의 앱 컴포넌트는 startService()를 호출함으로써 서비스를 실행할 수 있고, 
+  이때 어떤 서비스를 실행할지에 대한 정보와 그 외에 서비스에 전달해야할 데이터를 담고 있는 인텐트를 인자로 넘길 수 있습니다. 
+  그리고 서비스의 onStartCommand() 콜백 메소드에서 매개변수로 그 인텐트를 받게 됩니다.
+
+#)onBind의 경우
+- startService() 메소드 대신 bindService() 메소드를 통해 시작되는 서비스를 서비스 바인딩 (Service Bind 혹은 Bound Service) 라 한다.
+- 마치 클라이언트-서버 와 같이 동작을 하는데 서비스가 서버 역할을 한다. 
+(액티비티는 서비스에게 어떠한 요청을 할 수 있고, 서비스로부터 요청에 대한 결과를 받을수 있음)
+
+- 하나의 서비스에 다수의 액티비티 연결 가능하며, 서비스 바인딩은 연결된 액티비티가 사라지면 서비스도 소멸된다. (즉 백그라운드에서 무한히 실행되지는 않음)
+- 클라이언트가 서비스와의 접속을 마치려면 unbindService() 를 호출한다.
+- 바인딩된 서비스(Bound services)는 다른 앱(또는 서비스)에서 서비스를 사용하고 싶다는 의향을 표현하면, 실행됩니다.
+- 바인딩된 서비스 개념은은 기본적으로 서비스가 다른 프로세스(서비스, 앱 등)에 API를 제공하는 것과 같음.
+- 그래서, 시스템은 프로세스 사이에 종속성이 있는지를 알게됨.
+(즉, 프로세스 A가 프로세스 B의 서비스에 바인딩되어 있을 경우, 시스템은 프로세스 A를 위해 프로세스 B를 실행해야 한다는 것을 인식하게됨)
+결론: 서비스가 돌아가는 동안 지속적으로 액티비티와 커뮤니케이션 하기 위해 사용
+
+
+#)서비스의 특징
+1. 화면이 없습니다.
+2. 한번 시작된 서비스는 백그라운드에서 돌아갑니다. 단, 오레오 이상 버전부터 애플리케이션 종료 시, ForeGroundService를 사용하지 않는다면 종료됩니다.
+3. 네트워크 통신, DB통신 등을 할 수 있습니다.(액티비티에서도 별도의 Thread를 이용한다면 통신 가능)
+4. bindService와 startService 두 개의 메서드로 서비스를 시작할 수 있습니다. (bindService는 서비스가 실행되는 동안 지속적으로 액티비티와 통신하기 위해 사용됩니다.)
+5. 매니패스트 옵션으로 export, enable 두 개가 있습니다.(export = 앱 외부에서 접근 가능한가, enable = 서비스가 인스턴스화 가능한가)
+
+예제코드) 
+class MyService : Service() {
+    //bindService
+	override fun onBind(intent: Intent): IBinder {
+		TODO("Return the communication channel to the service.")
+	}
+    //startService
+	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int { 
+		return super.onStartCommand(intent, flags, startId) 
+	}
+}
+----------------------------
+- 콘텐츠 프로바이더(CP : Content Provider)?
+앱의 데이터를 공유하는 컴포넌트이다.
+예를 들어 카카오톡에서 갤러리에 접근이 가능하듯 다른 앱의 데이터에 접근할 수 있다.
+안드로이드는 기본적으로 주소록, 이미지, 오디오 등 주요 데이터에 대한 내장 CP를 제공한다.
+ContentProvider 클래스를 상속받아서 사용한다.
+
+- 브로드캐스트 리시버(BR : Broadcast Receiver)?
+시스템 이벤트가 발생할 때 실행되게 하는 컴포넌트이다.
+시스템 이벤트란 사용자 이벤트가 아니라 시스템에서 발생하는 특정 상황을 의미한다.(배터리 방전, 시스템 부팅 완료, 언어 설정 변경, 문자메시지 수신 등)
+BroadcastReceiver 클래스를 상속받아서 사용한다.
+
+----------------------------------
+#)액티비티
+액티비티는 UI 화면을 담당하는 컴포넌트입니다. 액티비티 역할을 하기 위해서는 자바소스에서 Activity클래스를 상속해야 하며 
+액티비티가 기본적으로 가지고 있는 생명주기 메소드를 재정의하여 원하는 기능을 구현하는 방식으로 제작합니다. 
+그래서 안드로이드 애플리케이션은 반드시 하나 이상의 액티비티를 포함하고 있으습니다.
+
+1. 안드로이드 어플리케이션은 반드시 하나이상의 Activity를 가지고 있어야 합니다.
+2. 두개의 액티비티를 동시에 Display할 수 없습니다.
+3. 인텐트(Intent)를 통해 다른 애플리케이션의 액티비티를 호출할 수 있습니다.
+4. 액티비티 내에는 프래그먼트(Fragment)를 추가하여 화면을 분할시킬 수 있습니다.
+
+인텐트는 위에서 독립적으로 동작하는 4대 컴포넌트들 간의 상호통신을 위한 장치이다.
+
+		   액티비티
+			 |
+브로드캐스트  - 인텐트 - 서비스
+			 |
+		컨텐츠 프로바이더
+
+================================================================
+#)인텐트
+액티비티, 서비스, 브로드캐스트 리시버는 인텐트라는 비동기 메시지에 의해 활성화된다. 
+인텐트의 주요 기능은 컴포넌트 실행 이며, 같은 애플리케이션 내에서도 다른 액티비티로 화면을 교체할 때에는 인텐트가 필요하다.
+인텐트는 android.content.Intent 클래스의 객체를 생성해서 사용한다.
+
+1. 명시적인텐트(Explicit intent) : 사용자가 정의한 액티비티 호출
+Intent intent = new Intent(this, YourActivity.class);
+
+2. 암묵적인텐트 : 내장된 액티비티호출
+Intent intent = new Intent("android.intent.android.View", Url.parse("http://www.google.com/"));
+
+
+#)서비스
+서비스는 android.app.Service 클래스를 상속받아 생성하며, 백그라운드에서 실행되는 앱의 구성 요소 이다.
+백그라운드에서 음악을 재생하거나 네트워크에서 파일을 다운로드하는 작업 등 액티비티에서 처리하기 어려운 작업 등을 실행한다. 
+따라서 실행된 상태를 계속 유지하기 위해 서비스가 비정상적으로 종료되도 자동으로 재실행한다. 
+서비스는 액티비티와 마찬가지로 새로 만들 경우 매니페스트 파일에 새 서비스 정보를 추가해야 한다.
+
+1. 음악재생화면(activity접속) -> 음악재생activity -> 작업요청 -> service -> 요청한음악재생 - network - 사용자는 음악이 재생되는 동안 다른 액티비티 실행가능
+
+//서비스의 생명주기(순서대로)
+void onCreate()	서비스 생성
+void onStart(Intent intent)	서비스 시작
+void onDestroy()	서비스 제거
+
+#)브로드캐스트 리시버
+브로드캐스트 리시버는 android.content.BroadcastReceiver 클래스를 상속받아 생성하며, 오직 수신만 하는 컴포넌트 이다. 
+브로드캐스트 리시버는 UI에 표시하지 않고, 브로드캐스트 이벤트 발생 시 상태바(status bar)에 알림(notification)을 표시한다.
+
+브로드캐스트 리시버는 단 하나의 콜백 메소드만을 갖는다.
+
+void onReceive(Context, Intent)	: 메시지가 리시버로 도착하면 자동으로 실행되어 메시지를 Intent 객체와 연결된 객체로 전달한다.
+
+
+#)콘텐트 프로바이더
+콘텐트 프로바이더는 android.content.ContentProvider 클래스를 상속받아 생성하며 애플리케이션 데이터의 공유를 관리 한다. 
+안드로이드 애플리케이션에서 파일, SQLite 데이터베이스 혹은 웹 상에 저장된 데이터들은 콘텐트 프로바이더를 통해 공유될 수 있다.
+
+=====================================================================================
+#)대표적으로 존재하는 브로드캐스트
+ACTION_BOOT_COMPLETED
+부팅이 끝났을 때 (RECEIVE_BOOT_COMPLETED 권한 등록 필요)
+
+ACTION_CAMERA_BUTTON
+카메라 버튼이 눌렸을 때
+
+ACTION_DATE_CHANGED
+ACTION_TIME_CHANGED
+폰의 날짜, 시간이 수동으로 변했을 때 (설정에서 수정했을 때)
+
+ACTION_SCREEN_OFF
+ACTION_SCREEN_ON
+화면 on, off
+
+ACTION_AIRPLANE_MODE_CHANGED
+비행기 모드
+
+ACTION_BATTERY_CHANGED
+ACTION_BATTERY_LOW
+ACTION_BATTERY_OKAY
+배터리 상태변화
+
+ACTION_PACKAGE_ADDED
+ACTION_PACKAGE_CHANGED
+ACTION_PACKAGE_DATA_CLEARED
+ACTION_PACKAGE_INSTALL
+ACTION_PACKAGE_REMOVED
+ACTION_PACKAGE_REPLACED
+ACTION_PACKAGE_RESTARTED
+어플 설치/제거
+
+ACTION_POWER_CONNECTED
+ACTION_POWER_DISCONNECTED
+충전 관련
+
+ACTION_REBOOT
+ACTION_SHUTDOWN
+재부팅/종료
+
+ACTION_TIME_TICK
+매분마다 수신
+
+android.provider.Telephony.SMS_RECEIVED
+sms 수신 (RECEIVE_SMS 권한 필요)
+
+=========================================================
+#)브로드캐스트 리시버 예시
+
+브로드캐스트리시버에 onReceiver를 정의해줍니다
+해당하는 브로드캐스트 이벤트가 발생하면 onReceive에 정의한 이벤트가 작동하게 됩니다
+스마트폰에 전원 연결 및 전원 연결 해제 동작을 수행할 때 Toast메시지가 나오도록 구현을 해줬습니다
+
+package com.example.broadcasttest;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.widget.Toast;
+
+public class broadCastRece extends BroadcastReceiver {
+
+    public final static String MyAction = "com.example.broadcasttest.ACTION_MY_BROADCAST";
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        // 전원연결 및 전원해제 시 Toast메시지를 띄운다
+        if(Intent.ACTION_POWER_CONNECTED.equals(intent.getAction()))
+        {
+            Toast.makeText(context, "전원 연결", Toast.LENGTH_SHORT).show();
+        }
+        else if(Intent.ACTION_POWER_DISCONNECTED.equals(intent.getAction()))
+        {
+            Toast.makeText(context, "전원 연결 해제", Toast.LENGTH_SHORT).show();
+        }
+    }
+}
+
+-----------------------
+//AndroidManifest.xml
+브로드캐스트 이벤트를 사용하기 위해서는 AndroidManifest.xml에 정의를 해줘야 합니다
+전원_Connected, 전원_DisConnected를 추가해줍니다
+<!-- 브로드캐스트 리시버 정의 -->
+<receiver
+    android:name=".broadCastRece"
+    android:enabled="true"
+    android:exported="true">
+    <intent-filter>
+    <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />  //해당 액션일때 리시버 발생
+    <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" /> //해당 액션일때 리시버 발생
+</intent-filter>
+</receiver>
+-------------------------
+//MainActivity.java
+브로드캐스트리시버 호출
+package com.example.broadcasttest;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Bundle;
+
+public class MainActivity extends AppCompatActivity {
+
+    private BroadcastReceiver mReceiver; // 브로드캐스트리시버 선언
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) { //여기서는 화면, 변수설정
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mReceiver = new broadCastRece(); // broadCastRece클래스를 브로드캐스트 리시버로 정의
+    }
+
+    @Override
+    protected void onResume() //실질적인 동작선언
+    {
+        super.onResume();
+        // 필터를 정의하여 broadCastRece클래스에 전송
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_POWER_CONNECTED);
+        filter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+        registerReceiver(mReceiver, filter);
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        unregisterReceiver(mReceiver);
+    }
+}
+===================================================================================
+#) toast 메시지 띄우기
+package com.example.toastopen;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    // 디자인 변수 선언
+    Button btnSh;
+    Button btnLo;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // 메인 레이아웃 매핑
+        setContentView(R.layout.activity_main);
+
+        // 버튼 매핑
+        btnSh = (Button) findViewById(R.id.btnShort);
+        btnLo = (Button) findViewById(R.id.btnLong);
+
+        // 버튼 클릭 이벤트 정의
+        btnSh.setOnClickListener(this);
+        btnLo.setOnClickListener(this);
+    }
+
+    // 버튼 이벤트 정의
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btnShort:
+                Toast.makeText(getApplicationContext(), "짧게 출력 Hello World!", Toast.LENGTH_SHORT).show(); //짧게
+                break;
+            case R.id.btnLong:
+                Toast.makeText(getApplicationContext(), "길게 출력 Hello World!", Toast.LENGTH_LONG).show(); //길게
+                break;
+        }
+    }
+}
+=====================================================================
+#)안드로이드에서 포커스를 가진다는 개념
+Focusable이 true로 되어 있는 뷰가 사용자와 Interaction하기 시작할 때, 그 뷰는 Focus를 가졌다 라고 한다.
+
+대표적 예로는 EditText가 있으며, EditText를 누르면 키보드가 보여지면서 EditText와 상호작용할 수 있게 되는데, 
+이 때 EditText는 Focus를 갖게 된다.
+
+Focus를 갖기 위해, Focusable의 속성이 true이어야 하는데, EditText의 경우 별도의 작업이 필요 없이 true를 값으로 갖지만
+TextView와 같은 태그들은 임의로 속성값을 바꾸어 주어야 한다.
+
+#)Focusable 속성값 변경하기
+​1. xml에서 변경하기
+해당 태그에 
+android:focusable="true"
+android:focusableInTouchMode="true"
+속성을 추가해주면 된다.
+
+예시)
+<LinearLayout
+    android:id="@+id/linearLayout_focus"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:layout_width="0px"
+    android:layout_height="0px"/>
+=========================================================================
+#)EditText에 자동으로 포커스되는것막기
+화면에서 EditText가 있을경우는 액티비티가 생성되면서 자동으로 포커스가 간다.
+이걸 막을려면
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical"
+	android:focusable="true"  //이 설정으로 막음
+	android:focusableInTouchMode="true" //이 설정으로 막음
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
+	
+	<EditText
+		android:id="@+id/editText"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"/>
+</LinearLayout>
+
+//만약 위의 구조처럼 화면이 구성되지 않으면 눈에 보이지않은 LinearLayout을 width=0px로 해주면된다.
+<LinearLayout
+    android:id="@+id/linearLayout_focus"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:layout_width="0px"
+    android:layout_height="0px"/>
+
+=========================================================================
+2. java에서 변경하기
+해당 태그를 findViewById를 이용하여 찾은 다음
+setFocusable(true), setFocusableInTouchMode(true)메소드를 이용한다.
+
+예시)
+b.setFocusable(true);
+b.setFocusableInTouchMode(true);
+
+Focusable과 FocusableInTouchMode의 차이점
+Focusable은 단순히 해당 뷰가 Focus를 가질 수 있는지 없는지의 여부를 결정한다.
+FocusableInTouchMode는 터치 모드에서, 즉 사용자의 터치에 의해서 포커스를 가질 수 있는지를 결정한다.
+
+setFocusable Method (ref API)
+Set whether this view can receive the focus. Setting this to false will also ensure that this view is not focusable in touch mode.
+이 뷰가 포커스를 가질 수 있는지 없는지를 설정한다. 이것을 false로 설정하는 것은 터치 모드에서도 focus를 가질수 없음을 보장한다.
+
+setFocusableInTouchMode (ref API)
+Set whether this view can receive focus while in touch mode. Setting this to true will also ensure that this view is focusable.
+이 뷰가 터치 모드에서 포커스를 받을 수 있는지를 설정한다. 이것을 true로 설정하는 것은 그 뷰가 focus를 가질 수 있음을 보장한다.
+
+==================================================================================
+#)포커스 종류
+nextFocusUp - 다음 focus 위치는 editText 위
+nextFocusDown - 다음 focus 위치는 editText 아래
+nextFocusLeft - 다음 focus 위치는 editText 좌측
+nextFocusRight - 다음 focus 위치는 editText 우측
+
+<EditText
+	android:id="@+id/text1"   //text1이라는 id를 가지는 EditText를 가져온다
+	style="@style/boxEdit"
+	android:layout_width="80dp"
+	android:layout_height="40dp"
+	android:gravity="center"
+	android:nextFocusDown="@+id/text2" //카보드에서 다음을 눌렸을 때 포커스로 올 EditText의 ID를 선언
+	android:maxLength="3"
+
+=======================================================================================
+#)Context란 생성된 객체가 어떤 일이 일어나고 있는지 알수있다.
+- Context의 종류
+☞ Application Context
+     - Application 라이프사이클에 귀속됨
+     - Singleton Instance -> 앱이 죽기 전까지 동일한 객체 반환
+     - getApplicationContext()로 접근
+     - 어떤 Context보다도 오래 유지됨
+☞ Activity Context
+     - Activity 라이프사이클에 귀속됨
+     - getContext()로 접근
+     - Activity 범위 내에서 Context를 전달
+
+==========================================================================================
+#) 브로드캐스트 리시버(각종 앱에서 발생하는 방송(이벤트)을 캐치 후 리시버로 처리할 수 있도록 해준다.
+//정적리시버
+한번등록되면 해제할 수 없다.
+Manifest에 리시버를 등록하는 방식으로 정적리시버를 등록한다.
+해당 앱이 설치될 때 자동으로 등록된다.
+
+public class BatteryReceiver extends BroadcastReceiver { //여기서 캐치
+    @Override
+    public void onReceive(Context context, Intent intent) { //동작
+        String action = intent.getAction();
+        Toast.makeText(context, "받은 Action-> ", Toast.LENGTH_SHORT).show(); 
+    }
+}
+
+<receiver
+    android:name=".broadcastreceiver.BatteryReceiver"
+    android:enabled="true"
+    android:exported="true">
+        <intent-filter>  <!--오래오 이전버전에서는 이렇게 해야됨-->
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+        </intent-filter>
+</receiver>
+
+//테스트
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    sendBroadcast(new Intent(Intent.ACTION_POWER_CONNECTED));
+}
+
+=================================================================================
+//동적리시버
+동적등록은 안드로이드의 Context가 유효할동안 동작한다. 
+즉 Activity의 Context로 BroadcatReceiver를 등록한다면 Activity 가 Destroy될 때까지 Receiver는 유효하다. 
+등록은 Context에서 제공하는 registerReceiver()를 사용해서 등록한다.
+메시지를 수신할 때는 등록된 Receiver의 onReceive() 메서드에서 수신 가능하다. 
+BroadCastReceiver가 더이상 필요하지 않을 경우 unregisterReceiver()메서드로 등록을 해제해야한다.
+
+@Override
+protected void onResume() {
+    super.onResume();
+    //BroadCastReceiver 에 Action 등록
+    batteryReceiver = new BatteryReceiver();
+    IntentFilter intentFilter = new IntentFilter();
+    intentFilter.addAction(Intent.ACTION_POWER_CONNECTED);
+    intentFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+    this.registerReceiver(batteryReceiver,intentFilter);
+}
+
+@Override
+protected void onPause() {
+    super.onPause();
+    unregisterReceiver(batteryReceiver);
+}
+
+=========================================================================================
+#) 브로드캐스트 리시버 등록하기(문자메시지가 도착하면 자동으로 메시지 내용 표시)
+
+브로드캐스트 리시버 생성 시, 자동으로 manifest 에 등록됨
+원하는 브로트캐스드 메시지만 수신하고 싶을 경우, 인텐트 필터 사용
+<application> 
+	//중략...
+	<receiver
+    	android:name=".SmsReceiver"
+        android:enabled="true"
+        android:exported="true">
+        //원하는 메시지만 수신하고 싶을 경우, 인텐트 필터 추가
+        <intent-filter>
+        	<action android:name="android.provider.Telephony.SMS_RECEIVED" />
+        </intent-filter>
+    </receiver>    
+</application>
+
+-------------------------
+브로드캐스트 수신하기
+
+브로드캐스트 리시버에 onReceive 메서드 정의
+브로드캐스트 메시지가 도착하면 자동으로 호출됨
+public class SmsReceiver extends BroadcastReceiver {
+	 
+     @Override
+    public void onReceive(Context context, Intent intent) {
+    
+    	//브로드캐스트 메시지가 도착하면 자동으로 호출
+    
+    }
+}
+
+-----------------------------
+//위에서 작성한 manifest에서 추가작성
+<manifest>
+    // SMS수신을 위한 권한 추가
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <application>
+        
+        중략...
+        
+		//브로드캐스트 수신자 등록
+        <receiver
+            android:name=".SmsReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+        
+        //SMS 내용을 표시할 액티비티 등록
+        <activity
+            android:name=".SmsActivity"
+            android:exported="false" />
+		
+        중략...
+        
+    </application>
+</manifest>
+
+----------------------------------------
+SmsReceiver.java
+브로트캐스트 메시지 수신 시 (onReceive),
+intent에서 bundle 객체를 가져와 SmsMessage 배열 형태로 바꾼 후(parseSmsMessage),
+해당 sms 내용을 담은 인텐트를 SmsActivity로 전달 (sendToActivity)
+
+package com.example.doit_06_broadcast_01;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.telephony.SmsMessage;
+import android.util.Log;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class SmsReceiver extends BroadcastReceiver {
+
+    public static final String TAG = "SmsReceiver";
+
+    public SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd:mm:ss");
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        Log.i(TAG,"onReceive()메서드 호출됨");
+        Bundle bundle = intent.getExtras(); // 인텐트에서 Bundle 객체 가져오기
+        SmsMessage[] messages = parseSmsMessage(bundle); // parseSmsMessage() 메서드 호출(아래작성함)
+
+        if(messages != null && messages.length>0){
+            String sender = messages[0].getOriginatingAddress();
+            Log.i(TAG,"SMS sender : "+sender);
+
+            String contents = messages[0].getMessageBody();
+            Log.i(TAG, "SMS contents : " + contents);
+
+            Date receiveDate = new Date(messages[0].getTimestampMillis());
+            Log.i(TAG,"SMS received data : "+receiveDate.toString());
+
+            sendToActivity(context,sender,contents, receiveDate);
+        }
+        //throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private void sendToActivity(Context context, String sender, String contents, Date receiveDate) {
+        Intent myIntent = new Intent(context, SmsActivity.class);
+        myIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        myIntent.putExtra("sender",sender);
+        myIntent.putExtra("contents",contents);
+        myIntent.putExtra("receivedDate",format.format(receiveDate));
+
+        context.startActivity(myIntent);
+    }
+
+    private SmsMessage[] parseSmsMessage(Bundle bundle){
+
+        Object[] objs = (Object[]) bundle.get("pdus"); //Bundle 객체의 부가 데이터 중 pdus 가져오기
+        SmsMessage[] messages = new SmsMessage[objs.length];
+
+        int smsCount = objs.length;
+        for(int i = 0 ; i < smsCount ; i++){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                String format =bundle.getString("format");
+                messages[i]=SmsMessage.createFromPdu((byte[]) objs[i],format);
+            }else{
+                messages[i] = SmsMessage.createFromPdu((byte[]) objs[i]);
+            }
+
+        }
+
+        return messages;
+
+    }
+}
+--------------------------------------------------
+MainActivity.java
+위험 권한(SMS 접근) 허용
+
+package com.example.doit_06_broadcast_01;
+
+import android.os.Bundle;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.yanzhenjie.permission.Action;
+import com.yanzhenjie.permission.AndPermission;
+import com.yanzhenjie.permission.runtime.Permission;
+
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity{
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        AndPermission.with(this)
+                .runtime()
+                .permission(Permission.RECEIVE_SMS)
+                .onGranted(new Action<List<String>>() {
+                    public void onAction(List<String> permissions) {
+                        showToast("허용된 권한 개수 : " + permissions.size());
+                    }
+                })
+                .onDenied(new Action<List<String>>() {
+                    public void onAction(List<String> permissions) {
+                        showToast("거부된 권한 개수 : " + permissions.size());
+                    }
+                })
+                .start();
+    }
+
+    public void showToast(String message){
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+}
+
+--------------------------------------------
+SmsActivity.java
+브로드캐스트 리시버로부터 전달받은 sms 내용을 화면에 표시
+
+package com.example.doit_06_broadcast_01;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class SmsActivity extends AppCompatActivity {
+
+    EditText editText1, editText2, editText3;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sms);
+
+        editText1 = findViewById(R.id.editText1);
+        editText2 = findViewById(R.id.editText2);
+        editText3 = findViewById(R.id.editText3);
+
+        Button bt = findViewById(R.id.button);
+
+        bt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
+
+        Intent passedIntent = getIntent();
+        processIntent(passedIntent);
+    }
+    @Override
+    protected void onNewIntent(Intent intent) {
+        processIntent(intent);
+
+        super.onNewIntent(intent);
+    }
+
+    private void processIntent(Intent intent) {
+
+        if(intent != null){
+            String sender = intent.getStringExtra("sender");
+            String contents = intent.getStringExtra("contents");
+            String receivedDate = intent.getStringExtra("receivedDate");
+
+            editText1.setText(sender);
+            editText2.setText(contents);
+            editText3.setText(receivedDate);
+
+        }
+    }
+}
+===============================================================
+#)구글플레이 콘솔계정은 구글플레이 스토어에 앱을 배포하기 위한 계정이다.
+결제페이지로 이동(개발자 계정 등록비) 
+
+#) 앱을 등록하기 위해서는 키를 생성해야한다.
+프로젝트폴더내에서 폴더를 생성(appkey)해서 그안에 키를 생성해서 관리하는게 좋다.
+build -> Generate Signed Bundle / APK 선택 -> APK선택후 next -> Key store path경로를 위에서 생성한폴더(appkey)로 지정
+-> 빌드가 돌면서 다되면 release폴더가 생성된다.
+여기까지가 앱배포를 위한 Apk생성이 완료된것이다.
+
+#)이제 스토어 콘솔을 통해 배포해보자
+모든어플리케이션 - 우측에 애플리케이션만들기 클릭
+
+#) 스토어에 등록된 앱들은 다양한 이유로 서비스를 종료하곤 합니다. 그럴때 종료된 앱을 스토어에서 노출되지 않도록 수정해야합니다.
+Play Console 고객센터에서는 완전한 삭제가 아닌 '게시 취소'로 가이드를 주고 있기 때문에 완전한 삭제가 아닌 게시 취소를 통해 앱을 스토어에서 비활성화 해야합니다.
+
+- 취소 방법
+구글 개발자 콘솔 > 해당 앱 클릭 > 앱 정보 > 가격 및 배포 > 게시 취소
+게시취소가 된 앱은 개발자 콘솔에서 '출시되지않음'으로 상태가 변경된다.
+
+#)안드로이드 내부테스트
+내부 테스트는 내부 테스트 버전을 생성, 출시하고 최대 100명의 테스터들에게만 링크를 제공하여 테스트를 진행할 수 있습니다.
+각 테스터 목록에 추가하고 싶은 테스터의 이메일 주소를 추가합니다. 그러면 테스터의 이메일 주소로 내부 테스트가 가능한 링크가 전송됩니다.
+
+#)플레이 스토어 속성에서 내부앱 공유 설정
+플레이스토어 설정에 들어가 play 스토어 버전을 7번 탭하면 아래의 오른쪽과 같이 내부 애 공유 버튼이 생성되고, 내부 앱 공유를 활성화 합니다.
+그 다음, 메일로 전송된 링크를 열어보면 초대수락 클릭하면 설치화면이 나온다.
+==========================================================================
+#)Intent Filter 구성요소
+- Intent Filter는 인텐트 객체 내의 정보들을 바탕으로 인텐트를 필터링하기에 인텐트 객체 내의 정보들을 바탕으로 자신이 받을 수 있는 정보들을
+정의하며, 이 정보들 중 Intent Filter 에서 주로 필터링하는 항목은 action,data,category이다.
+
+이러한 Intent Filter의 내용들을 어플리케이션이 실행되기 전에 안드로이드 시스템에서 알고있어야 다른 어플리케이션에서
+해당 어플리케이션의 컴포넌트를 필요로 하는 Intent를 발생시켜도 해당 컴포넌트를 실행시킬수있다.
+그렇기 때문에 Intent Filter의 내용들은 Manifest의 각 컴포넌트 태그 내에 정의된다.
+
+<activity 
+	android:name=".FirstActivity"
+	android:label="@string/app_name">
+	<intent-filter>
+		<action android:name="android.intent.action.MAIN"/>
+		<category android:name="android.intent.category.LAUNCHER"/>
+	</intent-filter>
+</activity>
+
+----------------------------------
+#) Intent Filter내의 각속성들 3가지
+1. action Filter
+- Intent 객체내의 action을 검사하여 intent-filter에 정의된 액션과 일치하는지 여부를 검사한다.
+  이검사를 통과하려면 Intent객체정의된액션 == intent-filter에 정의된 액션과 같아야한다.
+  단, Intent액션이 아예정의되어 있지않은 경우에는 action filter를 통과할수있다.
+  
+2. category Filter
+- Intent 객체내의 category를 검사하여 intent-filter에 정의된 카테고리와 일치하는지 여부를 검사한다.
+  위에서 action 검사에서는 아예 정의되어있지 않은 경우 통과할 수 있었지만 category에서는 intent객체의 category == intent-filter의 category가 되야한다.
+ 
+3. data-filter
+- Intent 객체 내의 data항목 및 type을 검사하여 intent-filter에 정의된 값과 비교하여 일치하는지 여부를 검사한다.
+데이터검사는 크게 데이터의 주소(URI)를 검사하는 부분과 데이터의 유형(type,MIME type)을 검사하냐는 부분으로 나누어진다.
+
+1. 먼저 데이터 주소를 검사하는 부분을보면 세분화하여 검사한다.
+scheme://host:port/path
+예)
+https://siadaddy-cordinglife.tistory.com 
+scheme는 https가 host는 siadaddy-cordinglife.tistory.com 가된다.
+
+2. 데이터유형 검사하는 부분을 보면
+<data android:mimeType="video/mpeg" android:scheme = "http"> 
+<data android:mimeType="audio/*" android:scheme="http">
+
+mimeType은 큰범주/큰범주의 하위범주로 정의된다.
+첫번째를 보면 data필터는 http 스키마를 가진 mpeg형식의 video 데이터
+두번째는 http 스키마를 가진 모든 audio 데이터를 가진 intent를 허용한다.
+
+==============================================================================================
+1. 인텐트의 기본 개념
+인텐트에 대해서 한 마디로 표현하면 "컴포넌트를 실행하기 위해 시스템에 넘기는 정보"라고 표현할 수 있습니다. 
+즉, 컴포넌트를 직접 자바 코드로 생성해서 실행하지 못하고 실행하고자 하는 컴포넌트 정보를 담은 인텐트를 구성해서 시스템에 넘기면 
+시스템에서 인텐트의 정보를 분석해 맞는 컴포넌트를 실행해주는 구조입니다.
+
+			system
+           /	   \    
+---A컴포넌트--         B컴포넌트---
+|	인텐트생성|			|		 |
+|----------|		---------|
+
+위 그림과 같이 A 컴포넌트에서 B 컴포넌트를 실행하기 위해서는 Intent에 정보를 담아 시스템에 의뢰하고, 
+시스템에서 B 컴포넌트를 실행하게 됩니다. 이처럼 컴포넌트 간의 실행 시 두 클래스가 직접 결합하기 않고, 
+인텐트를 매개로 해서 실행되므로 같은 앱 내의 컴포넌트를 실행하든 다른 앱의 컴포넌트를 실행하든 개발자는 인텐트를 시스템에 의뢰하기만 하면 됩니다. 
+즉, 같은 코드로 같은 앱이나 외부 앱의 컴포넌트를 실행할 수 있습니다.
+
+---------------------------------------
+2. 명시적 인텐트, 암시적 인텐트
+인텐트에 의해 다른 컴포넌트를 실행할 때 인텐트에 어떤 정보를 담는지에 따라 크게 명시적 인텐트와 암시적 인텐트로 구분됩니다.
+
+2.1 명시적 인텐트
+명시적 인텐트는 실행하고자 하는 컴포넌트의 클래스명을 인텐트에 담는 방법입니다. 주로 같은 앱의 컴포넌트를 실행할 때 이용하는 방법입니다.
+
+			   system
+		 /      		\
+ |----Intent-----|	     
+ | DetailActivity|
+ |---------------|
+       /
+ |---------------|    |------------|   
+ | ListActivity  |    |DetailActivity|
+ |---------------|    |------------|
+ 
+예를 들어, ListActivity에서 DetailActivity를 실행한다고 가정하겠습니다. 
+ListActivity에서 DetailActivity를 실행하기 위해서 인텐트에 클래스명을 담고 
+시스템에서는 인텐트에 있는 클래스명을 참조해서 DetailActivity 클래스를 실행하는 방법이 명시적 인텐트입니다.
+
+// 명시적 인텐트 실행
+// 생성자로 Context와 실행하고자 하는 Class를 준다
+// 이처럼 클래스명을 직접 주는 것은 명시적 인텐트
+val intent = Intent(this, DetailActivity::class.java)
+// 해당 인텐트를 가지고 시스템에게 의뢰하기 위한 메서드
+startActivity(intent)
+위의 코드를 보면 Intent 객체의 생성자로 실행하려는 클래스명을 담았습니다. 
+이처럼 직접 클래스명을 담는 것을 명시적 인텐트라고 합니다. 
+자신의 앱의 클래스명은 확실히 알고 있으므로 명시적 인텐트를 사용하여 컴포넌트를 실행합니다.
+
+----------------------------------------
+2.2 암시적 인텐트
+암시적 인텐트는 클래스명이 아닌 Intent Filter 정보를 활용합니다. 주로 클래스명을 알 수 없는 외부 앱의 컴포넌트를 실행할 때 이용합니다.
+
+			   system
+		 /      			\
+ |----Intent Filter-----|	     
+ | DetailActivity		|
+ |----------------------|
+       /
+ |---------------|    		|------------|   
+ | A앱            |    		|B앱          |
+ |---------------|    		|------------|
+ 
+ A 앱의 액티비티에서 B 앱의 액티비티를 실행한다고 가정하겠습니다. 
+ 두 앱은 서로 외부 앱이므로 연동 시 다른 앱의 컴포넌트 클래스명을 알 수도 없고, 
+ 코드에서 클래스명을 명시할 수도 없습니다. 
+ 그래서 클래스명 대신 Intent Filter 정보를 담아 실행하면 시스템에서 Intent Filter 정보를 해석해서 컴포넌트를 실행하는 것이 암시적 인텐트입니다.
+
+#) 어떻게 intentFilter에 담을것이냐
+//AndroidManifest.xml
+<activity android:name=".DetailActivity" android:exported="false">
+    <intent-filter>
+        <action android:name="kr.co.lee.ACTION_VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:scheme="http" />
+    </intent-filter>
+</activity>
+
+#)액티비티 클래스 코드
+// 암시적 인텐트 실행
+// intent의 action 프로퍼티의 값으로 Manifest.xml에서 정의한 intent-filter의 action 태그의 이름을 설정
+val intent = Intent().apply {
+    action = "kr.co.lee.ACTION_VIEW"
+}
+
+// 인텐트를 실행하려고 시도
+try {
+    startActivity(intent)
+} catch(e: ActivityNotFoundException) {
+    // 인텐트를 다룰 액티비티가 없는 경우 앱이 무엇을 해야할지 정의
+}
+
+위의 Manifest.xml에 컴포넌트를 다음과 같이 등록하면 시스템에서는 이 액티비티를 위해 클래스명과 intent-filter 정보를 가지게 됩니다. 
+그리고 코드에서는 생성자에 클래스명을 대입하지 않고 Action 정보를 주었습니다. 
+Action 문자열이 "kr.co.lee.ACTION_VIEW"로 등록된 액티비티를 실행해 달라는 의미입니다.
+결국, 실행하려는 컴포넌트의 AndroidManifest.xml 파일에 정의된 intent-filter 정보와 동일한 값을 주어 실행하는 것이 암시적 인텐트입니다.
+
+이때, 해당하는 인텐트에 반응 할 앱이 한개라면 바로 그 앱이 실행되고, 
+반응 할 액티비티가 여러 개라면(지도를 실행하는 경우 - 구글 지도, 네이버 지도, 카카오 지도 등) 다이얼로그 형식으로 사용자에게 선택 할 수 있게 합니다. 
+그리고 반응 할 앱이 없다면 ActivityNotFoundException이 발생해 그 안에서 코드를 작성하면 됩니다.
+
+-----------------------------------------
+#)인텐트 필터
+AndroidManifest.xml에 컴포넌트 하위 태그로 <intent-filter> 태그가 등록되는데 그 안의 태그는 다음과 같습니다.
+
+<activity android:name=".DetailActivity" android:exported="true">
+    <intent-filter>
+        <action android:name="kr.co.lee.ACTION_VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <data android:scheme="http" />
+    </intent-filter>
+</activity>
+
+action : 컴포넌트가 어떤 능력을 갖추고 있는지에 대한 문자열입니다. 개발자가 임의로 지정하는 단어도 가능하며, 라이브러이에서 지정한 문자열을 이용해도 됩니다.
+
+category : 컴포넌트에 대한 추가 정보로 어느 점주의 컴포넌트인지를 표현하는 데 사용됩니다. 개발자가 임의로 지정하는 단어도 가능하지만, 
+거의 대부분 라이브러리 내에서 준비된 단어를 사용합니다. 
+만약 startActivity()나 startActivityForResult() 메서드로 암시적 인텐트를 실행할 경우 
+코드에서 지정하지 않아도 CATEGORY_DEFAULT가 선언된 것처럼 행동합니다. 따라서 category 태그로 DEFAULT를 무조건 넣어야 합니다.
+
+data : data는 컴포넌트를 실행하기 위해 필요한 데이터에 대한 상세 정보를 명시하기 위해 사용됩니다. 
+data는 URL 형식으로 표현되어 android:scheme, android:host, android:port , android:mimeType 등으로 선언하게 됩니다.
+
+android:exported
+해당 속성은 다른 앱에 의해서 해당 액티비티가 실행될 수 있는지 없는지를 나타내는 속성입니다.
+만약 true를 설정한다면 해당 액티비티는 다른 앱에 의해서 실행될 수 있고, false로 설정한다면 해당 액티비티는 자신의 앱에서만 실행할 수 있십니다. 자신의 앱에서만 액티비티를 실행시킬 것이라면 false로 설정하면 됩니다.
+
+액티비티나, 서비스, 브로드캐스트 리시버에서 인텐트 필터를 사용하고 android:exported 속성을 명시적으로 지정하지 않는다면 
+안드로이드 12버전 이상에서는 스마트폰에 앱이 설치되지 않는다고 합니다.
+
+-------------------------------------------------
+#)Extra 데이터
+인텐트를 이용하여 컴포넌트를 실행할 수 있는데, 컴포넌트를 실행하면서 데이터를 전달해야 할 수도 있습니다.
+
+			   system
+		 /      		\
+ |----Intent-----|	     
+ | DetailActivity|
+ |---------------|
+       /
+ |---------------|    |------------|   
+ | ListActivity  |    |DetailActivity|
+ |---------------|    |------------|
+ 
+ListActivity에서 DetailActivity로 데이터를 넘긴다고 가정하겠습니다. 
+그러면 ListActivity에서 DetailActivity를 실행하기 위한 인텐트에 데이터를 담아 전달하는 방식을 이용합니다. 
+이 데이터를 Extra 데이터 라고 부릅니다.
+
+// intent로 객체를 넘기기 위해 Serializable를 구현
+// 데이터를 직렬화 하기 위한 인터페이스
+data class User(val name: String, val age: Int): Serializable
+
+// 객체 생성
+val user = User("User1", 20)
+
+val intent = Intent(this, DetailActivity::class.java)
+// putExtra 메서드로 String, int, 객체 등 전달
+intent.putExtra("data", "hello")
+intent.putExtra("data2", 1)
+intent.putExtra("data3", user)
+startActivity(intent)
+
+-----------------------------------------
+인텐트를 발생하기 전에 putExtra() 함수를 이용하여 데이터를 인텐트 객체에 담아주면 됩니다. 
+Extra 데이터는 key, value 형식으로 담아주면 되고 코드와 같이 문자열, 숫가, 객체 등 모든 타입의 데이터를 넘길 수 있습니다. 
+이처럼 인텐트를 통해 데이터를 넘기면 받는 쪽에서는 자신을 실행했던 인텐트를 얻어서 그 객체에 담긴 데이터를 얻는 구조입니다.
+
+// 자신을 실행한 intent 객체 얻어오기(getIntent)
+val intent = intent
+// getXXXExtra를 사용하여 데이터를 받아오는데 두 번째 매개변수는 기본값
+val stringData = intent.getStringExtra("data")
+val intData = intent.getIntExtra("data2", 0)
+val objectData = intent.getSerializableExtra("data3") as User
+intent 프로퍼티를 이용해 자신을 실행한 인텐트 객체를 얻고, 그 안에 담긴 ExtraData를 getXXXExtra() 함수를 이용하여 얻습니다.
+
+-------------------------------------------
+#) 결과 되돌리기
+액티비티는 화면 출력을 주목적으로 하는 컴포넌트이므로 인텐트가 발생하면 화면이 전환됩니다. 
+이때 사용자가 뒤로가기 버튼을 누르면 화면이 되돌아오겠지만, 
+사용자가 뒤로가기 버튼을 누리지 않고도 코드에서 자동으로 화면이 되돌아오게 처리해야 할 때가 있습니다.
+
+화면을 자동으로 되돌리려면 인텐트를 발생시킬 때, startActivity() 함수를 이용하지 않고 startActivityForResult() 함수를 이용합니다.
+
+#)ListActivity
+// Intent 객체 생성
+val intent = Intent(this, DetailActivity::class.java)
+// startActivityForResult의 두 번째 매개변수로 개발자 숫자 값을 지정해 결과를 되돌려 받았을 때
+// 어느 요청이 들어온지 구분하기 위해 사용
+startActivityForResult(intent, 10)
+
+startActivityForResult() 함수를 이용하여 액티비티를 시작하는데, 
+두 번째 매개변수로 숫자 값을 지정합니다. 이 값은 불러온 액티비티가 종료되어 
+다시 돌아올 때 자동으로 호출되는 onActivityResult() 함수에서 결과를 구분하기 위해 사용합니다.
+
+#)ListActivity
+// 화면이 되돌아 왔을 때 자동 호출
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    if(requestCode == 10 && resultCode == RESULT_OK) {
+        // 종료된 액티비티에서 넘어온 데이터
+        val data = data?.getStringExtra("data")
+        Toast.makeText(this, data, Toast.LENGTH_SHORT).show()
+    }
+
+    super.onActivityResult(requestCode, resultCode, data)
+}
+이 onActivityResult함수가 자동으로 호출되는데 첫 번째 매개변수가 startActivityForResult()에서 
+지정한 숫자 값이고 resultCode는 불러온 Activity가 종료되기전에 지정한 값입니다.
+
+#)DetailActivity
+// 자신을 실행한 intent 객체 얻어오기(getIntent)
+val intent = intent
+// 받아온 intent에 데이터 넣기
+intent.putExtra("data", "데이터 넘기기")
+// 자신의 상태 입력하기(RESULT_OK를 지정하여 정상으로 처리되어 되돌린 것임을 명시)
+setResult(RESULT_OK, intent)
+// 종료
+finish()
+불려진 액티비티의 코드로 intent 프로퍼티를 이용해 자신을 호출 한 인텐트를 얻어옵니다. 
+그 인텐트에는 putExtra로 데이터도 넣을 수 있습니다. 
+그리고 setResult 메서드를 통하여 상태를 지정하고 종료하면 이 매개변수가 위의 onActivityResult 함수의 매개변수로 들어가게 됩니다.
+============================================================================
 
 
 
