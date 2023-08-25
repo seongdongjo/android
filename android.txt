@@ -2217,13 +2217,214 @@ Button button;
  }
 }
 =============================================================================
+안드로이드 스튜디오를 개발하다보면 안드로이드에서 특정 권한을
+획득해야 동작이 가능한 기능들이 있다.
+안드로이드 마쉬멜로우 버전 이전에서는 그냥 바로 개발자가 코드상에 권한 허가를 넣어주면 됐지만
+안드로이드 마쉬멜로우 버전 이후부터는 사용자가 직접 권한을 허락해야한다.(팝업창)
 
+그럼 권한을 안드로이드 스튜디오에서 어떻게 얻을까?
 
+#)AndroidManifest.xml
 
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.permission">
+ 
+    <!-- 권한 추가 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+ 
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Permission">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+ 
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
 
+---------------------
+#)권한얻기(MainActivity.java)
+권한을 얻는 소스이다.
+저장소 읽기, 쓰기 권한이 있는지 체크하여 없다면 사용자에게 권한을
+허용할 지 물어봅니다.(팝업창) 권한이 없다면 앱을 종료시킨다.
 
+public class MainActivity extends AppCompatActivity {
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
+        // 권한ID를 가져옵니다
+        int permission = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        int permission2 = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE);
+
+        // 권한이 열려있는지 확인(권한이 닫혀있으면 아래 코드를 실행해서 권한을 물어본다)
+        if (permission == PackageManager.PERMISSION_DENIED || permission2 == PackageManager.PERMISSION_DENIED) {
+            // 마쉬멜로우 이상버전부터 권한을 물어본다
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // 권한 체크(READ_PHONE_STATE의 requestCode를 1000으로 세팅
+                requestPermissions(
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE},
+                        1000);
+            }
+            return;
+        }
+    }
+
+    // 권한 체크 이후로직
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grandResults) {
+        // READ_PHONE_STATE의 권한 체크 결과를 불러온다
+        if(requestCode == 1000) {
+            boolean check_result = true;
+
+            // 모든 퍼미션을 허용했는지 체크
+            for (int result : grandResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    check_result = false;
+                    break;
+                }
+            }
+
+            // 권한 체크에 동의를 하지 않으면 안드로이드 종료
+            if(check_result == true) {
+
+            }
+            else {
+                finish();
+            }
+        }
+    }
+}
+
+==================================================================
+#) 권한이 얻기 위해서는 2가지 인데
+- 권한창 띄우기
+- 사용자가 직접 앱 설정에서 권한허용(이 방법은 사용자가 거의 안하므로 권한창 띄우는 걸로 추천)
+
+1. manifest에 사용할 권한을 등록한다
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+2. 메인코드
+앱이 실행되면 권한창을 띄워주고, 권한을 허가하지 않으면 앱이 종료되는 코드
+
+public class MainActivity extends AppCompatActivity {
+    String[] permission_list = {
+        Manifest.permission.WRITE_CONTACTS
+    };
+    
+    @Override
+    protected void onCreate(Bundel savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        checkPermission();
+    }
+    
+    public void checkPermission() {
+        //현재 안드로이드 버전이 6.0미만이면 메서드를 종료한다.
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        return;
+        
+        for(String permission : permission_list) {
+            //권한 허용여부를 확인한다.
+            int chk = checkCallingOrSelfPermission(permission);
+            //권한이 없다면
+            if(chk == PackageManager.PERMISSION_DENIED) {
+                //권한 허용 여부를 확인하는 창을 띄운다.
+                requestPermission(permisson_list,0)
+            }
+        }
+    }
+    
+}
+
+@Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode==0)
+        {
+            for(int i=0; i<grantResults.length; i++)
+            {
+                //허용됬다면
+                if(grantResults[i]==PackageManager.PERMISSION_GRANTED){
+                }
+                else {
+                    Toast.makeText(getApplicationContext(),"앱권한설정하세요",Toast.LENGTH_LONG).show();
+                    finish();
+                }
+            }
+        }
+==============================================================
+ContextCompat.checkSelfPermission() 메서드를 사용하여 앱에 이미 권한을 부여 받았는지 확인 가능
+호출결과로는 PERMISSION_GRANTED 또는 PERMISSION_DENIED를 반환받게된다.
+
+public static int checkSelfPermission(Context context, String permission)
+-> return으로는 int형이고 -> PackageManager.PERMISSION_GRANTED, PackageManager.PERMISSION_DENIED 
+
+#)사용예시 : ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION) //GPS와 네트워크를 이용하여 단말기 위치 식별
+
+===============================================================
+#) 앱에 필요한 권한을 요청하려는 경우 사용자가 처음 권한을 요청받은건지, 기존에 요청을 받았는데 거부를 한 것인지에 따라
+요청방식을 달리 해야하고 요청화면도 달라지게 된다.
+
+shouldShowRequestPermissionRationale() 메소드는 사용자가 이전에 권한 요청을 거부한 경우 true 값을 넘겨준다.
+그 결과를 이용하여 앱을 사용하려면 권한이 필요함을 사용자에게 알려주는 안내만 추가하면된다.
+
+함수) public static boolean shouldShowRequestPermissionRationale(Activity activity, String pemission)
+
+예시) if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+        //이전에 거부한 경우 해당
+    }
+    else { //처음요청하는 경우 그냥 권한요청하면됨}
+
+===========================================================
+#)권한요청
+권한요청은 메소드를 호출하면서 필요한 권한을 적어주면 된다. 요청하려는 권한이 여러개이면 String 배열에
+쭉 기입해 주면되고 너무 많으면 별도 배열 구성해서 추가가능
+
+함수) static void requestPermissions(Activity activity, String[] permissions, int requestCode) //requestCode는 실행 후 전달받을 코드이다
+
+#) 요청권한이 한개인 경우(배열에 한개)
+static final int PERMISSIONS_REQUEST_READ_LOCATION=0x00000001;
+ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_READ_LOCATION);
+
+#) 요청권한이 두개 이상인 경우
+static final int PERMISSIONS_REQUEST_READ_LOCATION=0x0000001;
+private String[] PERMISSIONS = {
+    Manifest.permission.ACCESS_COARSE_LOCATION,
+    Manifest.permission.ACCESS_FINE_LOCATION
+};
+ActivityCompat.requestPermissions(this,PERMISSIONS,PERMISSIONS_REQUEST_READ_LOCATION);
+
+========================================================
+#) 위에서 권한요청을 보내면 사용자가 권한요청 대화상자에 응답하면 시스템은 앱의 onRequestPermissionsResult() 메소드를 호출한다.
+public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    switch(requestCode) {
+        case returnCode:
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //권한이허가된경우
+            }
+            else {
+                //권한이 거절된 경우
+            }
+            break;
+    }
+}
+===========================================================
 
 
 
