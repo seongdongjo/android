@@ -4825,16 +4825,16 @@ public class MainActivity extends Activity implements View.OnClickListener{
 Button button;
  @Override
  protected void onCreate(Bundle savedInstanceState) {
- super.onCreate(savedInstanceState);
- setContentView(R.layout.activity_main);
- button = (Button)findViewById(R.id.button);
- button.setOnClickListener(this);
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
+    button = (Button)findViewById(R.id.button);
+    button.setOnClickListener(this);
  }
  
  @Override
  public void onClick(View v) {
- Intent intent = new Intent(getApplicationContext(),SecondActivity.class);
- startActivity(intent);
+    Intent intent = new Intent(getApplicationContext(),SecondActivity.class);
+    startActivity(intent);
  }
 }
 =============================================================================
@@ -4946,6 +4946,62 @@ minSdkVersion는 앱이 실행될 수 있는 최소 API 버전을 지정한다.
 여기서, compileSdkVersion나 buildToolsVersion는 16일 필요가 없고 최신 버전으로 설정하면 된다.
 
 ========================================================================
+프로젝트의 SDK target을 33으로 변경하게 되면
+기존 이미지 및 사진권한이 갑자기 사라지는 현상이 나온다.(메뉴옆에 이미지라던지)
+추가적으로 뮤직, 비디오, 오디어, 노티피케이션 등도 사라진다.
+
+33sdk로 변경하게 되면
+기존 READ_EXTERNAL_STORAGE 권한에 대한 세분화가 진행된다.
+
+미디어 유형         요청권한
+이미지 및 사진   READ_MEDIA_IMAGES
+동영상         READ_MEDIA_VIDEO
+오디오         READ_MEDIA_AUDIO
+
+따라서, 기존에 READ_EXTERNAL_STORAGE 권한만 적용되어있으면
+이미지,사진,동영상,오디오 파일에 대한 권한이 모두 사라진다.
+
+//이렇게 써야한다.
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+//하지만 13미만에서는 아직 READ_EXTERNAL_STORAGE 권한이 컨트롤을 하기 때문에
+//READ_MEDIA 권한을 주게되면 권한 알럿이 뜨지가 않는다.
+//반대로 해도 마찬가지이다.
+//아래처럼 분기를 나눠서 쓰면된다.
+if(Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) { //TIRAMISU = android 13버전
+    
+} else {
+    
+}
+========================================================================
+//Notification permission
+- Notification Permission(POST_NOTIFICATIONS)은 Target SDK API 33이상부터 추가가능
+- Target SDK API32 이하의 앱이 Android13 디바이스에 설치되면 Notification Channel등록될때
+  자동으로 Notification 권한 요청 팝업 노출
+- Target SDK API33 이상의 앱이 Android13 디바이스에 설치되면 Notification 권한요청을 개발자가
+  원하는 타이밍에 노출 가능
+- Target SDK API33 이상의 앱이 Android12 이하 디바이스에 설치되면 기존과 동일하게 Notification
+  권한요청없이 사용가능
+
+즉, Android 12까지는 앱에서 별도의 권한을 받지 않고 Notification을 띄울 수 있고
+앱 설정에 가서 Notification 알림 활성화/비활성화를 통하여 Notification 권한을 조정했다.
+
+Android 12에서는 Notification 권한이 기본적으로 무조건 활성화 상태였다면
+Android 13에서는 Notification 권한이 기본적으로 비활성화 상태이며
+사용자가 권한을 허용해줘야 활성화 상태가 된다.
+//이렇게 하면 Notification 권한을 요청 할 수 있는데 SDK API 33이상에서만 권한 추가가 가능하다.
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+========================================================================
+
+
+
+
+
+========================================================================
+
 #)minSdkVersion
 App을 실행할 때 요구되는 API level이다. 이거보다 낮으면 설치할 수 없다.
 
@@ -5381,7 +5437,6 @@ android:focusableInTouchMode="true"
 2. java에서 변경하기
 해당 태그를 findViewById를 이용하여 찾은 다음
 setFocusable(true), setFocusableInTouchMode(true)메소드를 이용한다.
-
 예시)
 b.setFocusable(true);
 b.setFocusableInTouchMode(true);
@@ -5397,6 +5452,17 @@ Set whether this view can receive the focus. Setting this to false will also ens
 setFocusableInTouchMode (ref API)
 Set whether this view can receive focus while in touch mode. Setting this to true will also ensure that this view is focusable.
 이 뷰가 터치 모드에서 포커스를 받을 수 있는지를 설정한다. 이것을 true로 설정하는 것은 그 뷰가 focus를 가질 수 있음을 보장한다.
+==================================================================================
+830,000 
+#)문자열 리소스
+앱의 버튼, 레이블, 텍스트 뷰 등에 사용되어지는 문자열들은 각각의 요소에 직접 적을 수도 있지만
+하나의 자원파일(strings.xml 등)에 정의해두고 참조해서 사용하는 것을 권장한다.
+이유는 변경의 용이성, 오타방지, 크기 절감
+
+#)layout폴더안에 xml로 끝나는 파일들이 있는데 다 디자인화면들이다.
+CODE, DESIGN탭으로 코드로 볼수 있고 화면(디자인)으로 볼 수도 있다.
+
+예를들어) 디자인 뷰의 앱화면 가운데 TextView가 하나있고, 글자는 "Hello World!"
 
 ==================================================================================
 #)포커스 종류
@@ -5420,7 +5486,7 @@ nextFocusRight - 다음 focus 위치는 editText 우측
 ☞ Application Context
      - Application 라이프사이클에 귀속됨
      - Singleton Instance -> 앱이 죽기 전까지 동일한 객체 반환
-     - getApplicationContext()로 접근
+     - getApplicationContext()로 접근 
      - 어떤 Context보다도 오래 유지됨
 ☞ Activity Context
      - Activity 라이프사이클에 귀속됨
@@ -6022,3 +6088,57 @@ finish()
 그 인텐트에는 putExtra로 데이터도 넣을 수 있습니다. 
 그리고 setResult 메서드를 통하여 상태를 지정하고 종료하면 이 매개변수가 위의 onActivityResult 함수의 매개변수로 들어가게 됩니다.
 ============================================================================
+#)gradle scripts에 보면 plugin이 있는데
+plugin이란 우리가 특정 작업(어플리케이션 개발 등)을 하기 위해서 모아놓은 Task들의 묶음이다.
+
+예를들어 앱을 개발하기 위해서는 필요한 라이브러리들을 받아온 후 해당 라이브러리들을 사용해 코틀린이나
+자바코드를 컴파일하고, 컴파일된 바이트코드의 묶음을 패키징해 apk나 aab파일로 만들어야한다.
+추가적으로 db통신, 서버 통신 테스트를 돌리기도 해야한다.
+
+이러한 작업들은 모두 Gradle파일에서 Task단위로 이루어지는데
+대표적으로 assembleRelease, build, test등의 task가 존재한다.
+
+하지만, 이러한 작업들을 일일히 Gradle파일에 정의해놓으면 매우 비효율적이므로 이를 미리 안드로이드 
+개발사인 구글이나 IDE개발사인 JetBrains에서 미리 만들은 다음 Plugin형태로 묶는다.
+
+그래서 신규프로젝트를 만들면
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+//위 두개의 Plugin들을 적용시키면 수많은 gradle Task들이 Gradle파일로 들어온다.
+gradle tasks --all을 수행하면 사용할 수 있는 task의 목록이 출력된다.
+
+//gradle assembleRelease이라는 빌드파일을 만들어내는 명령어를 실행시키면
+gradle task -all에서 나왔던 목록중에 app:assembleRelease가 돌아가고 빌드파일이 떨어진다.
+
+=========================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
